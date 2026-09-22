@@ -4,6 +4,22 @@
 
 基础日程功能可离线使用；AI 功能需要联网，并使用你自己的 API Key。
 
+## 界面预览
+
+### 日程清单
+
+查看任务类别、重要性、截止倒计时、任务量和困难度，支持筛选、排序与完成状态管理。
+
+![SimpleSchedule 日程清单界面](assets/screenshots/schedule-list.png)
+
+### 二维坐标视图
+
+下图展示“重要性 × 迫切性”视图：圆面积表示任务量，颜色表示困难度。点击圆点可编辑，右键可删除。
+
+![SimpleSchedule 重要性与迫切性二维气泡图](assets/screenshots/priority-map.png)
+
+截图展示的是拍摄时的日程和倒计时，实际使用时会随数据及时间更新。
+
 ## 快速开始
 
 1. 下载仓库中的 [SimpleSchedule.html](./SimpleSchedule.html)，或通过 GitHub 的 **Code → Download ZIP** 下载并解压。
