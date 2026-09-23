@@ -22,7 +22,7 @@
 
   function ui(){
     const css=document.createElement('style');
-    css.textContent='#oneDriveDialog{width:min(640px,94vw)}.cloud-status{display:flex;gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#f8fafb;margin-bottom:16px}.cloud-dot{width:10px;height:10px;border-radius:50%;background:#9aa5b1}.cloud-dot.ok{background:#27845b}.cloud-dot.busy{background:#aa7013}.cloud-dot.error{background:#bd4145}.cloud-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.cloud-config input{width:100%}.cloud-meta{font-size:12px;color:var(--muted);line-height:1.7}';
+    css.textContent='#oneDriveDialog{width:min(640px,94vw)}.cloud-status{display:flex;gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#f8fafb;margin-bottom:16px}.cloud-dot{width:10px;height:10px;border-radius:50%;background:#9aa5b1}.cloud-dot.ok{background:#27845b}.cloud-dot.busy{background:#aa7013}.cloud-dot.error{background:#bd4145}.cloud-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.cloud-meta{font-size:12px;color:var(--muted);line-height:1.7}';
     document.head.append(css);
     const btn=document.createElement('button');btn.id='oneDriveBtn';btn.textContent='☁ OneDrive';document.querySelector('header .actions')?.prepend(btn);
     const d=document.createElement('dialog');d.id='oneDriveDialog';d.innerHTML=
@@ -39,15 +39,14 @@
     btn.onclick=()=>{refresh();d.showModal()};$('closeOneDrive').onclick=()=>d.close();
     $('connectOneDrive').onclick=connect;$('syncOneDrive').onclick=()=>sync(true);$('disconnectOneDrive').onclick=disconnect;
     $('autoOneDrive').onchange=e=>{cloud.auto=e.target.checked;saveCloud();if(cloud.auto)queue()};
-    $('oneDriveClientId').onchange=e=>{if(!cfgId){cloud.clientId=e.target.value.trim();saveCloud();msalApp=null;refresh()}};
     refresh();
   }
 
   const clientId=()=>cfgId;
   const secure=()=>location.protocol==='https:'||['localhost','127.0.0.1'].includes(location.hostname);
   async function app(){
-    if(!clientId())throw Error('请先配置 Microsoft Application (client) ID');
-    if(!secure())throw Error('Microsoft 登录需要 HTTPS');
+    if(!clientId())throw Error('OneDrive 同步尚未由站点管理员启用');
+    if(!secure())throw Error('Microsoft 登录仅支持 HTTPS 站点');
     if(!window.msal?.PublicClientApplication)throw Error('MSAL 未加载');
     if(msalApp)return msalApp;
     msalApp=new msal.PublicClientApplication({auth:{clientId:clientId(),authority:'https://login.microsoftonline.com/common',redirectUri:location.origin+location.pathname},cache:{cacheLocation:'localStorage'}});
@@ -111,7 +110,7 @@
   async function refresh(){
     if(!$('oneDriveDialog'))return;const ac=await account();$('autoOneDrive').checked=!!cloud.auto;
     $('connectOneDrive').disabled=!secure()||!clientId()||!!ac;$('syncOneDrive').disabled=!ac||busy;$('disconnectOneDrive').disabled=!ac;
-    if(!secure()){status('','本地预览');$('oneDriveAccount').textContent='真实 Microsoft 登录仅在 HTTPS/localhost 下启用'}else if(!clientId()){status('','站点尚未配置 Microsoft 登录');$('oneDriveAccount').textContent='需要站点管理员先配置 Microsoft Entra 应用 Client ID'}else if(ac){status('ok','OneDrive 已连接');$('oneDriveAccount').textContent=ac.username||ac.name||'Microsoft 账号'}else{status('','未连接 OneDrive');$('oneDriveAccount').textContent='点击按钮后将打开 Microsoft 官方登录认证'}
+    if(!secure()){status('error','OneDrive 同步不可用');$('oneDriveAccount').textContent='请通过 HTTPS 访问 SimpleSchedule'}else if(!clientId()){status('','OneDrive 同步暂未启用');$('oneDriveAccount').textContent='站点管理员尚未完成 Microsoft 登录配置'}else if(ac){status('ok','OneDrive 已连接');$('oneDriveAccount').textContent=ac.username||ac.name||'Microsoft 账号'}else{status('','未连接 OneDrive');$('oneDriveAccount').textContent='点击“使用 Microsoft 账号登录”开始同步'}
     $('oneDriveLastSync').textContent=cloud.lastSync?'上次同步：'+new Date(cloud.lastSync).toLocaleString('zh-CN'):'尚未同步';$('oneDriveBtn').textContent=ac?'☁ OneDrive ✓':'☁ OneDrive';
   }
   window.addEventListener('focus',async()=>{if(cloud.auto&&await account())sync(false)});
