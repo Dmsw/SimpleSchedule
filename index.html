@@ -398,25 +398,43 @@ function updateMobileLayout(){
  if(mobileMode){$('taskLinks').innerHTML='';linkSegments=[];}
  activePointers.clear();dragState=null;$('chart').classList.remove('dragging');renderLinked(Date.now());
 }
+function mobileTagConnector(p){
+ const tx=Math.max(p.x,Math.min(p.cx,p.x+p.width)),ty=Math.max(p.y,Math.min(p.cy,p.y+p.height));
+ const dx=tx-p.cx,dy=ty-p.cy,d=Math.hypot(dx,dy)||1;
+ return {x1:p.cx+dx/d*p.r,y1:p.cy+dy/d*p.r,x2:tx,y2:ty};
+}
 function placeMobileTags(points,box){
- const used=[];
+ const used=[],gap=14;
  return points.map(p=>{
   const title=Array.from(p.title),text=title.length>12?title.slice(0,11).join('')+'…':p.title;
   const width=Math.min(box.right-box.left,Math.max(64,Array.from(text).reduce((n,c)=>n+(/[^\x00-\xff]/.test(c)?13:7),20))),height=44;
   let best=null,cost=Infinity;
-  for(const dy of [0,-50,50,-100,100,-150,150])for(const left of [p.cx+p.r+7,p.cx-p.r-7-width,p.cx-width/2]){
-   const x=Math.max(box.left,Math.min(left,box.right-width)),y=Math.max(box.top,Math.min(p.cy-22+dy,box.bottom-height));
+  const candidates=[];
+  for(const dy of [0,-50,50,-100,100,-150,150]){
+   candidates.push([p.cx+p.r+gap,p.cy-height/2+dy],[p.cx-p.r-gap-width,p.cy-height/2+dy]);
+  }
+  candidates.push([p.cx-width/2,p.cy-p.r-gap-height],[p.cx-width/2,p.cy+p.r+gap]);
+  for(let y=box.top;y<=box.bottom-height;y+=22)for(const x of [box.left,box.right-width])candidates.push([x,y]);
+  for(const [left,top] of candidates){
+   const x=Math.max(box.left,Math.min(left,box.right-width)),y=Math.max(box.top,Math.min(top,box.bottom-height));
+   const clearance=q=>Math.hypot(q.cx-Math.max(x,Math.min(q.cx,x+width)),q.cy-Math.max(y,Math.min(q.cy,y+height)))-q.r;
+   if(clearance(p)<gap-.01)continue;
    const overlaps=used.reduce((n,b)=>n+Math.max(0,Math.min(x+width,b.x+b.width)-Math.max(x,b.x))*Math.max(0,Math.min(y+height,b.y+b.height)-Math.max(y,b.y)),0);
-   const score=overlaps*100+Math.hypot(x+width/2-p.cx,y+height/2-p.cy);
+   const circlePenalty=points.reduce((n,q)=>n+Math.max(0,gap-clearance(q)),0);
+   const score=overlaps*100+circlePenalty*1000+clearance(p)+Math.abs(y+height/2-p.cy)*.15;
    if(score<cost){cost=score;best={...p,text,x,y,width,height};}
   }
+  // Very small artificial viewports: preserve the gap rather than cover the circle.
+  if(!best)best={...p,text,x:p.cx+p.r+gap,y:p.cy-height/2,width,height};
   used.push(best);return best;
  });
 }
 function mobileTags(a,now,sx,sy,radii){
  if(!mobileMode)return '';
  const points=a.map(t=>{const [x,y]=coordinates(t,now);return{id:t.id,title:t.title,cx:sx(x),cy:sy(y),r:radii.get(t.id),color:difficultyColor(t.difficulty)};});
- return placeMobileTags(points,chartBox).map(p=>'<g class="mobile-task-tag" data-edit="'+esc(p.id)+'" tabindex="0" role="button" aria-label="查看日程：'+esc(p.title)+'"><title>'+esc(p.title)+'</title><line x1="'+p.cx+'" y1="'+p.cy+'" x2="'+(p.x+p.width/2)+'" y2="'+(p.y+22)+'" stroke="'+p.color+'" stroke-opacity=".6" pointer-events="none"/><rect x="'+p.x+'" y="'+p.y+'" width="'+p.width+'" height="44" rx="10" fill="white" fill-opacity=".95" stroke="'+p.color+'"/><text x="'+(p.x+10)+'" y="'+(p.y+27)+'" font-size="13" fill="#193329" pointer-events="none">'+esc(p.text)+'</text></g>').join('');
+ const tags=placeMobileTags(points,chartBox);
+ const lines=tags.map(p=>{const l=mobileTagConnector(p);return '<line class="mobile-tag-link" x1="'+l.x1+'" y1="'+l.y1+'" x2="'+l.x2+'" y2="'+l.y2+'" stroke="'+p.color+'" stroke-width="1.5" stroke-opacity=".8" pointer-events="none"/>';}).join('');
+ return lines+tags.map(p=>'<g class="mobile-task-tag" data-edit="'+esc(p.id)+'" tabindex="0" role="button" aria-label="查看日程：'+esc(p.title)+'"><title>'+esc(p.title)+'</title><rect x="'+p.x+'" y="'+p.y+'" width="'+p.width+'" height="44" rx="6" fill="white" fill-opacity=".95" stroke="'+p.color+'"/><text x="'+(p.x+10)+'" y="'+(p.y+27)+'" font-size="13" fill="#193329" pointer-events="none">'+esc(p.text)+'</text></g>').join('');
 }
 function openMobileDetail(id){
  const t=tasks.find(t=>t.id===id);if(!t)return;mobileDetailId=id;
