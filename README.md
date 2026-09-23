@@ -24,7 +24,7 @@
 
 ## 快速开始
 
-1. 下载仓库中的 [SimpleSchedule.html](./SimpleSchedule.html)，或通过 GitHub 的 **Code → Download ZIP** 下载并解压。
+1. 下载仓库中的 [index.html](./index.html)，或通过 GitHub 的 **Code → Download ZIP** 下载并解压。
 2. 将 HTML 文件保存在固定文件夹，用 Windows 上的 Edge 或 Chrome 打开。
 3. 点击 **＋ 新建日程**，填写任务并保存。
 
@@ -92,7 +92,7 @@
 - **适配全部筛选任务**：主动扩展范围，显示当前搜索、类别和状态筛选下的全部任务。
 - 键盘聚焦图表背景后，方向键平移，**＋ / −** 缩放。
 
-为避免无效坐标，重要性轴限制在 0–11，任务量轴限制在 0–200000 小时；迫切性轴限制在 ±876000 小时。缩放保留最小可见跨度，输入超出限制的范围会调整为实际可显示范围。
+坐标视图允许拖拽到负数区域，方便自由平移；任务数据本身仍遵守原有取值范围。迫切性轴限制在 ±876000 小时，重要性与任务量显示范围也保留较大的安全边界。缩放会保留最小可见跨度。
 
 ### 列表联动与排序
 
@@ -192,8 +192,30 @@ API Key 以未加密形式保存在浏览器本地存储中；密码输入框只
 
 ## 开发说明
 
-项目入口为 [SimpleSchedule.html](./SimpleSchedule.html)。样式、业务逻辑和 Markdown 解析器均包含在单个文件内，无构建步骤。
+项目入口为 [index.html](./index.html)。样式、业务逻辑和 Markdown 解析器均包含在单个文件内，无构建步骤。
 
 修改时请保留已有存储键和备份兼容逻辑。建议检查任务新增、编辑、删除撤销、导入导出、两种图表以及 AI 请求中的日期与时区；API 行为需要使用自己的有效 Key 在实际浏览器中验证。
 
 Markdown 解析使用内嵌的 **Marked 17.0.5**，相关第三方许可声明保留在 HTML 文件中。
+
+
+## 服务器部署
+
+仓库现在可直接作为静态网站目录使用，无需构建。推荐在服务器上将仓库克隆到固定目录，例如：
+
+```bash
+sudo mkdir -p /var/www
+cd /var/www
+sudo git clone https://github.com/Dmsw/SimpleSchedule.git simpleschedule
+```
+
+Nginx 的站点根目录直接指向 `/var/www/simpleschedule`，入口文件为 `index.html`。仓库中的 [deploy/README.md](./deploy/README.md) 提供了完整的 Nginx、HTTPS 和更新说明。
+
+后续更新网站可在服务器执行：
+
+```bash
+cd /var/www/simpleschedule
+./deploy/update.sh
+```
+
+该脚本使用 `git pull --ff-only`，静态文件更新后无需重启 Nginx。
