@@ -5,9 +5,8 @@
   const GRAPH='https://graph.microsoft.com/v1.0', SCOPES=['Files.ReadWrite.AppFolder'];
   const cfgId=String(window.SIMPLE_SCHEDULE_CONFIG?.microsoftClientId||'').trim();
   let cloud=loadCloud(), msalApp=null, snapshot=snap(), timer=0, busy=false;
-  if(cfgId) cloud.clientId=cfgId;
 
-  function loadCloud(){try{return {...{clientId:'',auto:true,lastSync:0,updated:{},deleted:{}},...JSON.parse(localStorage.getItem(CLOUD_KEY)||'{}')}}catch{return {clientId:'',auto:true,lastSync:0,updated:{},deleted:{}}}}
+  function loadCloud(){try{return {...{auto:true,lastSync:0,updated:{},deleted:{}},...JSON.parse(localStorage.getItem(CLOUD_KEY)||'{}')}}catch{return {auto:true,lastSync:0,updated:{},deleted:{}}}}
   function saveCloud(){localStorage.setItem(CLOUD_KEY,JSON.stringify(cloud))}
   function sig(t){return JSON.stringify([t.id,t.title,t.details,t.category,t.importance,t.workload,t.deadline,t.done,t.difficulty,t.detailsMode])}
   function snap(){return new Map(tasks.map(t=>[t.id,sig(t)]))}
@@ -31,9 +30,9 @@
       '<div class="formbody">'+
       '<div class="cloud-status"><span id="oneDriveDot" class="cloud-dot"></span><div><b id="oneDriveState">未连接 OneDrive</b><div id="oneDriveAccount" class="small">本地日程仍正常保存</div></div></div>'+
       '<p class="small">连接后，日程保存到你自己的 OneDrive App Folder。SimpleSchedule 只申请应用文件夹权限，不读取其它 OneDrive 文件。</p>'+
-      '<div class="cloud-actions"><button id="connectOneDrive" class="primary">连接 OneDrive</button><button id="syncOneDrive" disabled>立即同步</button><button id="disconnectOneDrive" disabled>断开本机</button></div>'+
+      '<div class="cloud-actions"><button id="connectOneDrive" class="primary">使用 Microsoft 账号登录</button><button id="syncOneDrive" disabled>立即同步</button><button id="disconnectOneDrive" disabled>退出 OneDrive</button></div>'+
       '<label><input id="autoOneDrive" type="checkbox"> 本地修改后自动同步</label>'+
-      '<details class="cloud-config"><summary>Microsoft 应用配置</summary><label class="field">Application (client) ID<input id="oneDriveClientId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></label><div class="small">Client ID 不是密码；本应用不需要 Client Secret。</div></details>'+
+      '<div class="cloud-meta">登录会跳转到 Microsoft 官方认证页面；用户无需填写 Client ID 或 Client Secret。</div>'+
       '<div class="cloud-meta">同步文件：<code>OneDrive / Apps / [应用名称] / '+FILE+'</code><br><span id="oneDriveLastSync">尚未同步</span><br><span id="oneDriveMsg"></span></div>'+
       '</div>';
     document.body.append(d);
@@ -44,7 +43,7 @@
     refresh();
   }
 
-  const clientId=()=>cfgId||String(cloud.clientId||'').trim();
+  const clientId=()=>cfgId;
   const secure=()=>location.protocol==='https:'||['localhost','127.0.0.1'].includes(location.hostname);
   async function app(){
     if(!clientId())throw Error('请先配置 Microsoft Application (client) ID');
@@ -106,13 +105,13 @@
     finally{busy=false}
   }
   function queue(){if(!cloud.auto||!clientId())return;clearTimeout(timer);timer=setTimeout(async()=>{if(await account())sync(false)},1500)}
-  async function connect(){cloud.clientId=cfgId||$('oneDriveClientId').value.trim();saveCloud();msalApp=null;try{await token(true);await refresh();await sync(true)}catch(e){status('error','连接失败');$('oneDriveMsg').textContent=e.message||String(e)}}
+  async function connect(){msalApp=null;try{await token(true);await refresh();await sync(true)}catch(e){status('error','连接失败');$('oneDriveMsg').textContent=e.message||String(e)}}
   async function disconnect(){try{const a=await app(), ac=a.getActiveAccount()||a.getAllAccounts()[0];if(ac)await a.logoutPopup({account:ac,mainWindowRedirectUri:location.href})}catch{}msalApp=null;refresh()}
   function status(kind,text){if(!$('oneDriveState'))return;$('oneDriveState').textContent=text;$('oneDriveDot').className='cloud-dot'+(kind?' '+kind:'')}
   async function refresh(){
-    if(!$('oneDriveDialog'))return;const ac=await account();$('autoOneDrive').checked=!!cloud.auto;$('oneDriveClientId').value=clientId();$('oneDriveClientId').readOnly=!!cfgId;
+    if(!$('oneDriveDialog'))return;const ac=await account();$('autoOneDrive').checked=!!cloud.auto;
     $('connectOneDrive').disabled=!secure()||!clientId()||!!ac;$('syncOneDrive').disabled=!ac||busy;$('disconnectOneDrive').disabled=!ac;
-    if(!secure()){status('','预览模式');$('oneDriveAccount').textContent='需要 HTTPS 才能登录'}else if(!clientId()){status('','等待应用配置');$('oneDriveAccount').textContent='请填写 Client ID'}else if(ac){status('ok','OneDrive 已连接');$('oneDriveAccount').textContent=ac.username||ac.name||'Microsoft 账号'}else{status('','未连接 OneDrive');$('oneDriveAccount').textContent='点击连接并授权应用文件夹权限'}
+    if(!secure()){status('','本地预览');$('oneDriveAccount').textContent='真实 Microsoft 登录仅在 HTTPS/localhost 下启用'}else if(!clientId()){status('','站点尚未配置 Microsoft 登录');$('oneDriveAccount').textContent='需要站点管理员先配置 Microsoft Entra 应用 Client ID'}else if(ac){status('ok','OneDrive 已连接');$('oneDriveAccount').textContent=ac.username||ac.name||'Microsoft 账号'}else{status('','未连接 OneDrive');$('oneDriveAccount').textContent='点击按钮后将打开 Microsoft 官方登录认证'}
     $('oneDriveLastSync').textContent=cloud.lastSync?'上次同步：'+new Date(cloud.lastSync).toLocaleString('zh-CN'):'尚未同步';$('oneDriveBtn').textContent=ac?'☁ OneDrive ✓':'☁ OneDrive';
   }
   window.addEventListener('focus',async()=>{if(cloud.auto&&await account())sync(false)});
