@@ -351,4 +351,8 @@ $('aiBtn').onclick=openAi;$('closeAi').onclick=()=>$('aiDialog').close();$('save
 const draft=document.createElement('button');draft.type='button';draft.textContent='✦ AI 辅助撰写';draft.onclick=()=>{openAi();$('aiPrompt').value='请根据题目“'+$('taskTitle').value.trim()+'”和已有细节，补写一份清晰、可执行的 Markdown 任务细则，包含目标、步骤、验收标准和风险。已有细节：'+$('taskDetails').value;};$('textMode').parentElement.prepend(draft);
 
 installLinks();installChartInteraction();load();resetViewport();render();setInterval(tick,1000);
-</script></body></html>
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@5.22.0/lib/msal-browser.min.js" crossorigin="anonymous"></script>
+<script src="./assets/js/onedrive-config.js"></script>
+<script src="./assets/js/onedrive-sync.js"></script>
+</body></html>
