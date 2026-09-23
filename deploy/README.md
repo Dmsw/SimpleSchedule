@@ -31,7 +31,7 @@ sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/simpleschedule
 sudo nano /etc/nginx/sites-available/simpleschedule
 ```
 
-将 `schedule.example.com` 替换成你的真实域名。
+当前配置已使用实际域名 `www.simpleschedule.site`。
 
 启用站点：
 
@@ -47,7 +47,7 @@ Ubuntu / Debian 可使用 Certbot：
 
 ```bash
 sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d schedule.example.com
+sudo certbot --nginx -d www.simpleschedule.site
 ```
 
 ## 4. 更新网站
