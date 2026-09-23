@@ -9,7 +9,7 @@ SimpleSchedule 的 OneDrive 同步使用 Microsoft OAuth / MSAL 和 Microsoft Gr
 3. Supported account types 选择同时支持组织账号和个人 Microsoft 账号的选项。
 4. 在 **Authentication** 中添加 **Single-page application (SPA)** Redirect URI：`https://www.simpleschedule.site/`
 5. 在 **API permissions** 中添加 Microsoft Graph 的 delegated permission：`Files.ReadWrite.AppFolder`。
-6. 复制 **Application (client) ID**，写入 `assets/js/onedrive-config.js`。
+6. 复制 **Application (client) ID**，由站点维护者写入 `assets/js/onedrive-config.js`。普通用户不需要看到或填写 Client ID。
 
 ```js
 window.SIMPLE_SCHEDULE_CONFIG = Object.freeze({
@@ -36,3 +36,7 @@ Client ID 是公开标识，不是密码。**不要创建或填写 Client Secret
 ## 权限设计
 
 使用 `Files.ReadWrite.AppFolder` 的目的是保持最小权限：SimpleSchedule 只能读写它自己的 OneDrive 应用文件夹，而不能浏览用户 OneDrive 中的其他文件。
+
+## 最终用户体验
+
+正式站点中，普通用户只会看到 **使用 Microsoft 账号登录**、**立即同步**、**自动同步** 和 **退出 OneDrive**。Client ID 不出现在普通用户界面中；它只是 SimpleSchedule 这个 SPA 的公开应用标识，由站点维护者一次性配置。
