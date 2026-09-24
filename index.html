@@ -14,7 +14,7 @@ main{max-width:1760px}.linked-layout{display:grid;grid-template-columns:minmax(0
 .selected-bubble{stroke:black!important;stroke-width:3!important;fill-opacity:1!important}.selection-box{fill:#286c5918;stroke:#286c59;stroke-width:1.5;stroke-dasharray:6 4;pointer-events:none}
 .taskcard.selected-card{box-shadow:inset 4px 0 0 #111;background:#f0f4f2}.taskcard{cursor:pointer}
 
-.mobile-only{display:none}.mobile-task-tag{cursor:pointer}.mobile-task-tag:focus rect{stroke:#111;stroke-width:3}.inline-tag-editor{position:fixed;z-index:40;margin:0;padding:0 9px;border:2px solid var(--accent);border-radius:6px;background:white;color:#193329;font:13px/1.2 "Segoe UI","Microsoft YaHei",sans-serif;box-shadow:0 2px 10px #0002;outline:none}
+.mobile-only{display:none}.mobile-task-tag{cursor:pointer}.mobile-task-tag:focus rect{stroke:#111;stroke-width:3}.edge-task-tag{opacity:.96}.inline-tag-editor{position:fixed;z-index:40;margin:0;padding:0 9px;border:2px solid var(--accent);border-radius:6px;background:white;color:#193329;font:13px/1.2 "Segoe UI","Microsoft YaHei",sans-serif;box-shadow:0 2px 10px #0002;outline:none}
 body.mobile-mode .mobile-only{display:inline-flex}
 body.mobile-mode #listView,body.mobile-mode #taskLinks,body.mobile-mode .top h2,body.mobile-mode .top .muted,body.mobile-mode .brand .sub,body.mobile-mode #sortBy,body.mobile-mode #direction{display:none!important}
 body.mobile-mode header{padding:12px;flex-wrap:wrap;gap:10px}
@@ -928,6 +928,25 @@ function mobileTags(a,now,sx,sy,radii){
  const tags=placeMobileTags(points,chartBox);
  const lines=tags.map(p=>{const l=mobileTagConnector(p);return '<line class="mobile-tag-link" x1="'+l.x1+'" y1="'+l.y1+'" x2="'+l.x2+'" y2="'+l.y2+'" stroke="'+p.color+'" stroke-width="1.5" stroke-opacity=".8" pointer-events="none"/>';}).join('');
  return lines+tags.map(p=>'<g class="mobile-task-tag" data-edit="'+esc(p.id)+'" tabindex="0" role="button" aria-label="'+(p.title?'查看日程：'+esc(p.title):'空白日程标签，双击填写')+'"><title>'+esc(p.title||'双击直接填写标题')+'</title><rect x="'+p.x+'" y="'+p.y+'" width="'+p.width+'" height="44" rx="6" fill="white" fill-opacity=".95" stroke="'+p.color+'"/><text x="'+(p.x+10)+'" y="'+(p.y+27)+'" font-size="13" fill="#193329" pointer-events="none">'+esc(p.text)+'</text></g>').join('');
+}
+function edgeTags(a,now,sx,sy){
+ const {left:L,right:R,top:T,bottom:B}=chartBox,cx=(L+R)/2,cy=(T+B)/2,tagH=34,pad=4;
+ return a.map(t=>{
+  const [x,y]=coordinates(t,now),px=sx(x),py=sy(y),dx=px-cx,dy=py-cy;
+  if(!Number.isFinite(dx)||!Number.isFinite(dy)||(!dx&&!dy))return '';
+  const tx=dx?((dx>0?R:L)-cx)/dx:Infinity,ty=dy?((dy>0?B:T)-cy)/dy:Infinity;
+  const k=Math.min(tx>0?tx:Infinity,ty>0?ty:Infinity);
+  if(!Number.isFinite(k))return '';
+  const bx=cx+dx*k,by=cy+dy*k,title=t.title||'',chars=Array.from(title),text=chars.length>12?chars.slice(0,11).join('')+'…':title;
+  const width=Math.min(R-L-2*pad,Math.max(64,Array.from(text).reduce((n,ch)=>n+(/[^\x00-\xff]/.test(ch)?13:7),20)));
+  let left,top;
+  if(Math.abs(by-T)<.75){left=Math.max(L+pad,Math.min(bx-width/2,R-width-pad));top=T+pad;}
+  else if(Math.abs(by-B)<.75){left=Math.max(L+pad,Math.min(bx-width/2,R-width-pad));top=B-tagH-pad;}
+  else if(Math.abs(bx-L)<.75){left=L+pad;top=Math.max(T+pad,Math.min(by-tagH/2,B-tagH-pad));}
+  else{left=R-width-pad;top=Math.max(T+pad,Math.min(by-tagH/2,B-tagH-pad));}
+  const color=difficultyColor(t.difficulty),label=title?'视图外日程：'+esc(title):'视图外空白日程标签，双击填写';
+  return '<g class="mobile-task-tag edge-task-tag" data-edit="'+esc(t.id)+'" tabindex="0" role="button" aria-label="'+label+'"><title>'+esc(title||'双击直接填写标题')+'</title><rect x="'+left+'" y="'+top+'" width="'+width+'" height="'+tagH+'" rx="6" fill="white" fill-opacity=".94" stroke="'+color+'" stroke-width="1.5" stroke-dasharray="4 2"/><text x="'+(left+9)+'" y="'+(top+22)+'" font-size="12" fill="#193329" pointer-events="none">'+esc(text)+'</text></g>';
+ }).join('');
 }
 function openMobileDetail(id){
  const t=tasks.find(t=>t.id===id);if(!t)return;mobileDetailId=id;
