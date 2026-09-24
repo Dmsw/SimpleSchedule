@@ -329,7 +329,7 @@ function draw(a,now){
   $('chart').setAttribute('aria-label','重要性与迫切性地图。鼠标拖动空白区域框选，滚轮平移，Ctrl 加滚轮缩放');
   $('legend').innerHTML='<span>困难度</span>'+difficultyColors.map((c,i)=>`<span><i style="background:${c}"></i>${i+1}</span>`).join('');
   $('chartNote').textContent='横轴重要性，纵轴迫切性（独立数值）；圆圈大小表示任务量并与地图坐标同步缩放，颜色表示困难度。鼠标左键拖动空白区域进行框选；拖动任意已选圆的内部可同时移动全部已选圆，按住圆圈边界并上下移动鼠标调整半径，松开后确认并退出；多选时会同时缩放所有已选圆。按住 Ctrl 时光标变为抓取手势，左键拖动可平移整个视图。滚轮默认上下移动视图，Shift + 滚轮左右移动，Ctrl + 滚轮以鼠标位置为中心缩放。右键地图创建日程；Esc 取消当前拖动。';
-  if(mobileMode)$('chartNote').textContent='长按地图创建日程；单指拖动，双指缩放。轻点圆圈或标题标签查看详情。标签拥挤时可放大地图；点击“适配全部”查找范围外日程。横轴重要性，纵轴迫切性。';
+  if(mobileMode)$('chartNote').textContent='长按地图创建日程；单指拖动，双指缩放。双击圆圈或标题标签可直接编辑。标签拥挤时可放大地图；点击“适配全部”查找范围外日程。横轴重要性，纵轴迫切性。';
 }
 function chartPoint(e){const svg=$('chart'),ctm=svg.getScreenCTM();if(!ctm)return null;const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(ctm.inverse());return{x:p.x,y:p.y};}
 function onPlot(p){return p&&p.x>=chartBox.left&&p.x<=chartBox.right&&p.y>=chartBox.top&&p.y<=chartBox.bottom;}
@@ -468,7 +468,6 @@ function finishBubbleDrag(commit=true){
   }else notify('日程已发生其他修改，本次拖动未保存。');
  }
  renderLinked(Date.now());
- if(commit&&!g.moved)openMobileDetail(g.id);
 }
 function beginSelectionDrag(e,p){
  const svg=$('chart'),rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
@@ -644,7 +643,7 @@ function createTaskAtMenu(){
 
 function deleteTask(id){const t=tasks.find(t=>t.id===id);if(!t)return;if(!confirm('删除“'+t.title+'”？'))return;closeChartMenu();tasks=tasks.filter(v=>v.id!==id);save();render();notify('日程已删除',()=>{if(!tasks.some(v=>v.id===t.id))tasks.push(t);save();render();});}
 function act(e){const b=e.target.closest('[data-edit],[data-toggle],[data-delete],[data-focus],[data-select]');if(!b)return;closeChartMenu();if(b.dataset.select){selectTask(b.dataset.select);return;}if(b.dataset.focus){focusTask(b.dataset.focus);selectedTaskId=b.dataset.focus;highlightSelection();requestLinks();return;}if(b.dataset.edit){openEditor(b.dataset.edit);return;}if(b.dataset.toggle){const t=tasks.find(t=>t.id===b.dataset.toggle);if(!t)return;t.done=!t.done;save();render();}if(b.dataset.delete)deleteTask(b.dataset.delete);}
-$('rows').onclick=act;$('chart').onclick=e=>{if(Date.now()<suppressChartClickUntil)return;const b=e.target.closest('[data-edit]');if(b){openMobileDetail(b.dataset.edit);}else{selectedTaskId=null;highlightSelection();requestLinks();}};
+$('rows').onclick=act;$('chart').onclick=e=>{if(Date.now()<suppressChartClickUntil)return;if(!e.target.closest('[data-edit]')){selectedTaskId=null;highlightSelection();requestLinks();}};
 $('chart').ondblclick=e=>{const tag=e.target.closest('.mobile-task-tag[data-edit]'),b=tag||e.target.closest('.bubble[data-edit]');if(b){e.preventDefault();e.stopPropagation();openEditor(b.dataset.edit);}};
 $('chart').oncontextmenu=e=>{e.preventDefault();if(radiusEdit||bubbleDrag)return;if(activePointers.size>1||dragState?.moved)return;const p=chartPoint(e);if(!onPlot(p))return;mapHoldCancel();if(!$('chartMenu').hidden)return;openChartCreateMenu(p,e.clientX,e.clientY);};
 $('chart').onkeydown=e=>{const bubble=e.target.closest('[data-edit]');if(!bubble)return;if(e.key==='Delete'){e.preventDefault();deleteTask(bubble.dataset.edit);}else if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();const r=bubble.getBoundingClientRect(),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;openChartCreateMenu(chartPoint({clientX:x,clientY:y}),x,y);}else if(e.key==='Enter'||e.key===' '){e.preventDefault();if(e.shiftKey)openEditor(bubble.dataset.edit);else selectTask(bubble.dataset.edit,true);}};
