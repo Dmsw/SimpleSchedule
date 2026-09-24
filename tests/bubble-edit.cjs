@@ -32,7 +32,7 @@ assert(Math.abs(evaluate('tasks[0].importance')-2)<1e-9);assert.equal(saves,1);
 evaluate('tasks[0].importance=0;tasks[0].urgency=0;render()');
 svg.handlers.pointerdown(evt('pointerdown',cx+19,cy));assert(evaluate('bubbleDrag.resize'));
 svg.handlers.pointermove(evt('pointermove',cx+39,cy));flush();
-assert.equal(evaluate('bubbleDrag.preview.workload'),40);assert.equal(evaluate('normalizedRadii(tasks,true).get("drag")'),40);
+assert.equal(evaluate('bubbleDrag.preview.workload'),40);assert.equal(evaluate('taskRadii(tasks,true).get("drag")'),40);
 assert.equal(evaluate('tasks[0].workload'),10);
 svg.handlers.pointerup(evt('pointerup',cx+39,cy));assert.equal(evaluate('tasks[0].workload'),40);assert.equal(saves,2);
 svg.handlers.pointerdown(evt('pointerdown',cx,cy));svg.handlers.pointermove(evt('pointermove',cx-100,cy));
@@ -44,3 +44,12 @@ element('mobileDetailTitle').textContent='';svg.handlers.pointerdown(evt('pointe
 evaluate('mobileQuery.matches=true;updateMobileLayout()');assert.equal(context.desktopBubbleHit(evt('pointerdown',cx,cy)),null);
 evaluate('mobileQuery.matches=false;updateMobileLayout()');assert.equal(context.desktopBubbleHit(evt('pointerdown',cx,cy,{pointerType:'touch'})),null);
 console.log('PASS: interior/edge cursors, moving coordinates without panning, preview-only changes, resize workload, commit/cancel, concurrent changes, click details and touch exclusion.');
+
+evaluate("tasks=[{id:'fixed',title:'fixed',importance:0,urgency:0,workload:10},{id:'other',title:'other',importance:1000,urgency:1000,workload:1000}];bubbleDrag=null;");
+assert.equal(evaluate('taskRadii(tasks).get("fixed")'),20);
+assert.equal(evaluate('taskRadii(tasks.slice(0,1)).get("fixed")'),20);
+evaluate('tasks[1].workload=100000');
+assert.equal(evaluate('taskRadii(tasks).get("fixed")'),20);
+assert.equal(evaluate('workloadRadius(40)'),40);
+assert.equal(evaluate('workloadRadius(.1)'),2);
+console.log('PASS: fixed radius independent of visible set, other workloads and singleton; stable workload/radius mapping.');
