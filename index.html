@@ -14,7 +14,7 @@ main{max-width:1760px}.linked-layout{display:grid;grid-template-columns:minmax(0
 .selected-bubble{stroke:black!important;stroke-width:3!important;fill-opacity:1!important}.selection-box{fill:#286c5918;stroke:#286c59;stroke-width:1.5;stroke-dasharray:6 4;pointer-events:none}
 .taskcard.selected-card{box-shadow:inset 4px 0 0 #111;background:#f0f4f2}.taskcard{cursor:pointer}
 
-.mobile-only{display:none}.mobile-task-tag{cursor:pointer}.mobile-task-tag:focus rect{stroke:#111;stroke-width:3}.edge-task-tag{opacity:.52}.inline-tag-editor{position:fixed;z-index:40;margin:0;padding:0 9px;border:2px solid var(--accent);border-radius:6px;background:white;color:#193329;font:13px/1.2 "Segoe UI","Microsoft YaHei",sans-serif;box-shadow:0 2px 10px #0002;outline:none}
+.mobile-only{display:none}.mobile-task-tag{cursor:pointer}.mobile-task-tag:focus rect,.mobile-task-tag.selected-tag rect{stroke:#111;stroke-width:3}.edge-task-tag{opacity:.52}.inline-tag-editor{position:fixed;z-index:40;margin:0;padding:0 9px;border:2px solid var(--accent);border-radius:6px;background:white;color:#193329;font:13px/1.2 "Segoe UI","Microsoft YaHei",sans-serif;box-shadow:0 2px 10px #0002;outline:none}
 body.mobile-mode .mobile-only{display:inline-flex}
 body.mobile-mode #listView,body.mobile-mode #taskLinks,body.mobile-mode .top h2,body.mobile-mode .top .muted,body.mobile-mode .brand .sub,body.mobile-mode #sortBy,body.mobile-mode #direction{display:none!important}
 body.mobile-mode header{padding:12px;flex-wrap:wrap;gap:10px}
@@ -274,8 +274,8 @@ function taskRadii(visible){return new Map(visible.map(t=>[t.id,workloadRadius(b
 function requestLinks(){if(!linkFrame)linkFrame=requestAnimationFrame(()=>{linkFrame=0;drawLinks();});}
 function hoveredTaskAt(x,y){
   if(dragState||selectionDrag||bubbleDrag||typeof document.elementFromPoint!=='function')return null;
-  const el=document.elementFromPoint(x,y),circle=el?.closest?.('#chart .bubble'),card=el?.closest?.('#rows [data-task-card]');
-  return circle?.dataset.edit||card?.dataset.taskCard||hoveredLinkAt(x,y,el);
+  const el=document.elementFromPoint(x,y),circle=el?.closest?.('#chart .bubble'),tag=el?.closest?.('#chart .mobile-task-tag'),card=el?.closest?.('#rows [data-task-card]');
+  return circle?.dataset.edit||tag?.dataset.edit||card?.dataset.taskCard||hoveredLinkAt(x,y,el);
 }
 function hoveredLinkAt(x,y,el){
   if(dragState||el?.closest?.('button,a,input,select,textarea,summary,dialog,[role="dialog"]'))return null;
@@ -287,6 +287,7 @@ function refreshHover(){if(pinnedTaskId&&!tasks.some(t=>t.id===pinnedTaskId))pin
 function highlightSelection(){
   refreshHover();
   for(const c of $('chart').querySelectorAll('.bubble')){const yes=selectedTaskIds.has(c.dataset.edit)||c.dataset.edit===selectedTaskId;c.classList.toggle('selected-bubble',yes);c.setAttribute('aria-pressed',String(selectedTaskIds.has(c.dataset.edit)));}
+  for(const tag of $('chart').querySelectorAll('.mobile-task-tag')){const yes=selectedTaskIds.has(tag.dataset.edit)||tag.dataset.edit===selectedTaskId;tag.classList.toggle('selected-tag',yes);tag.setAttribute('aria-pressed',String(selectedTaskIds.has(tag.dataset.edit)));}
   for(const card of $('rows').querySelectorAll('[data-task-card]')){const yes=selectedTaskIds.has(card.dataset.taskCard)||card.dataset.taskCard===selectedTaskId;card.classList.toggle('selected-card',yes);const button=card.querySelector('[data-select]');if(button){const picked=selectedTaskIds.has(card.dataset.taskCard);button.setAttribute('aria-pressed',String(picked));button.textContent=picked?'已选中':'选中';}}
 }
 function setSelectedTasks(ids){
@@ -637,8 +638,8 @@ function openEditor(id){if(radiusEdit)finishRadiusEdit(false);if(bubbleDrag)fini
 $('taskForm').onsubmit=e=>{e.preventDefault();const title=$('taskTitle').value.trim(),category=$('taskCategory').value.trim();if(!title||!category){notify('题目和类别不能仅包含空格');return;}const date=new Date($('taskDeadline').value);if(!Number.isFinite(date.getTime())){notify('请填写有效的截止时间');return;}const t={id:$('taskId').value||uid(),title,details:$('taskDetails').value,category,importance:Number($('taskImportance').value),workload:Number($('taskWorkload').value),deadline:date.toISOString(),done:$('taskDone').checked,difficulty:Number($('taskDifficulty').value),detailsMode};try{validate([t]);}catch(e){notify(e.message);return;}const i=tasks.findIndex(v=>v.id===t.id);if(i<0)tasks.push(t);else tasks[i]=t;save();$('editor').close();render();};
 $('taskImportance').oninput=()=>$('importanceValue').value=$('taskImportance').value;$('newBtn').onclick=()=>openEditor();$('closeEditor').onclick=$('cancelEditor').onclick=()=>$('editor').close();$('helpBtn').onclick=()=>$('help').showModal();$('closeHelp').onclick=()=>$('help').close();
 
-let chartMenuId=null,chartCreatePoint=null,mapHoldCancel=()=>{};
-function closeChartMenu(restore=false){$('chartMenu').hidden=true;chartCreatePoint=null;chartMenuId=null;if(restore)$('chart').focus();}
+let chartMenuId=null,chartCreatePoint=null,chartMenuDeleteIds=[],mapHoldCancel=()=>{};
+function closeChartMenu(restore=false){$('chartMenu').hidden=true;chartCreatePoint=null;chartMenuId=null;chartMenuDeleteIds=[];if(restore)$('chart').focus();}
 function mapCoordinateAt(p){
  if(!onPlot(p))return null;
  const fx=(p.x-chartBox.left)/(chartBox.right-chartBox.left),fy=(p.y-chartBox.top)/(chartBox.bottom-chartBox.top);
@@ -649,8 +650,11 @@ function openChartCreateMenu(p,x,y){
  const point=mapCoordinateAt(p);if(!point)return;
  chartCreatePoint=point;suppressChartClickUntil=Date.now()+800;
  $('chartMenuTitle').textContent='重要性 '+numberLabel(point.importance)+' · 截止日期 '+dayLabel(point.day);
- const selectedCount=[...selectedTaskIds].filter(id=>tasks.some(t=>t.id===id)).length,deleteBtn=$('chartMenuDeleteSelected');
- deleteBtn.disabled=!selectedCount;deleteBtn.textContent=selectedCount?'批量删除已选日程（'+selectedCount+'）':'批量删除已选日程';
+ const explicit=[...selectedTaskIds].filter(id=>tasks.some(t=>t.id===id)),hovered=selectedTaskId&&tasks.some(t=>t.id===selectedTaskId)?selectedTaskId:null;
+ chartMenuDeleteIds=explicit.length?explicit:(hovered?[hovered]:[]);
+ const selectedCount=chartMenuDeleteIds.length,deleteBtn=$('chartMenuDeleteSelected');
+ deleteBtn.disabled=!selectedCount;
+ deleteBtn.textContent=selectedCount>1?'批量删除已选日程（'+selectedCount+'）':selectedCount===1?(explicit.length?'删除已选日程':'删除悬浮日程'):'批量删除已选日程';
  const menu=$('chartMenu');menu.hidden=false;
  menu.style.left=Math.max(8,Math.min(x,window.innerWidth-menu.offsetWidth-8))+'px';
  menu.style.top=Math.max(8,Math.min(y,window.innerHeight-menu.offsetHeight-8))+'px';
@@ -695,10 +699,11 @@ function editTagInline(tag){
 }
 function deleteTask(id){const t=tasks.find(t=>t.id===id);if(!t)return;if(!confirm('删除“'+t.title+'”？'))return;closeChartMenu();tasks=tasks.filter(v=>v.id!==id);save();render();notify('日程已删除',()=>{if(!tasks.some(v=>v.id===t.id))tasks.push(t);save();render();});}
 function deleteSelectedTasks(){
- const ids=new Set([...selectedTaskIds].filter(id=>tasks.some(t=>t.id===id))),removed=tasks.filter(t=>ids.has(t.id));
+ const ids=new Set(chartMenuDeleteIds.filter(id=>tasks.some(t=>t.id===id))),removed=tasks.filter(t=>ids.has(t.id));
  if(!removed.length){closeChartMenu();return;}
- if(!confirm('确定删除选中的 '+removed.length+' 个日程？'))return;
- closeChartMenu();tasks=tasks.filter(t=>!ids.has(t.id));selectedTaskIds.clear();selectedTaskId=null;pinnedTaskId=null;save();render();
+ const label=removed.length===1?(removed[0].title||'未命名日程'):'选中的 '+removed.length+' 个日程';
+ if(!confirm('确定删除'+(removed.length===1?'“'+label+'”':label)+'？'))return;
+ closeChartMenu();tasks=tasks.filter(t=>!ids.has(t.id));for(const id of ids)selectedTaskIds.delete(id);selectedTaskId=null;pinnedTaskId=null;save();render();
  notify('已删除 '+removed.length+' 个日程',()=>{
   const existing=new Set(tasks.map(t=>t.id));
   for(const t of removed)if(!existing.has(t.id))tasks.push(t);
