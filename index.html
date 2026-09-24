@@ -351,7 +351,7 @@ function draw(a,now){
 function chartPoint(e){const svg=$('chart'),ctm=svg.getScreenCTM();if(!ctm)return null;const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(ctm.inverse());return{x:p.x,y:p.y};}
 function onPlot(p){return p&&p.x>=chartBox.left&&p.x<=chartBox.right&&p.y>=chartBox.top&&p.y<=chartBox.bottom;}
 function requestChartRefresh(){if(!gestureFrame)gestureFrame=requestAnimationFrame(()=>{gestureFrame=0;renderLinked(Date.now());});}
-function zoomViewport(factor,p){const b=chartBox;const fx=(p.x-b.left)/(b.right-b.left),fy=(b.bottom-p.y)/(b.bottom-b.top),next={};for(const [axis,f] of [['x',fx],['y',fy]]){const [lo,hi]=viewport[axis],anchor=lo+(hi-lo)*f;next[axis]=[anchor+(lo-anchor)*factor,anchor+(hi-anchor)*factor];}setViewport(next);requestChartRefresh();}
+function zoomViewport(factor,p){const b=chartBox;const fx=(p.x-b.left)/(b.right-b.left),fy=(p.y-b.top)/(b.bottom-b.top),next={};for(const [axis,f] of [['x',fx],['y',fy]]){const [lo,hi]=viewport[axis],anchor=lo+(hi-lo)*f;next[axis]=[anchor+(lo-anchor)*factor,anchor+(hi-anchor)*factor];}setViewport(next);requestChartRefresh();}
 function beginGesture(){const pts=[...activePointers.values()];if(!pts.length){dragState=null;return;}const p=pts[0],q=pts[1];dragState={x:q?(p.x+q.x)/2:p.x,y:q?(p.y+q.y)/2:p.y,distance:q?Math.hypot(q.x-p.x,q.y-p.y):0,viewport:{x:[...viewport.x],y:[...viewport.y]},moved:false};}
 
 
@@ -401,7 +401,7 @@ function startRadiusEdit(e,h){
  const ids=[...selectedTaskIds],originals=new Map(),previews=new Map(),radii=new Map();
  for(const id of ids){
   const task=tasks.find(v=>v.id===id);if(!task)continue;
-  const state={importance:task.importance,urgency:task.urgency,workload:task.workload};
+  const state={importance:task.importance,deadline:task.deadline,workload:task.workload};
   originals.set(id,state);previews.set(id,{...state});radii.set(id,workloadRadius(task.workload));
  }
  if(!originals.size)return false;
@@ -427,7 +427,7 @@ function finishRadiusEdit(commit=true){
  const g=radiusEdit;if(!g)return;
  radiusEdit=null;const svg=$('chart');svg.style.cursor='';if(svg.hasPointerCapture(g.pointerId))svg.releasePointerCapture(g.pointerId);
  if(commit&&g.moved){
-  const unchanged=[...g.originals].every(([id,o])=>{const t=tasks.find(v=>v.id===id);return t&&['importance','urgency','workload'].every(k=>t[k]===o[k]);});
+  const unchanged=[...g.originals].every(([id,o])=>{const t=tasks.find(v=>v.id===id);return t&&['importance','deadline','workload'].every(k=>t[k]===o[k]);});
   if(unchanged){
    for(const [id,preview] of g.previews){const t=tasks.find(v=>v.id===id);if(t)t.workload=preview.workload;}
    save();notify(g.originals.size>1?'已同时调整 '+g.originals.size+' 个圆圈的半径。':'圆圈半径已调整。');
@@ -445,12 +445,12 @@ function startBubbleDrag(e){
  const originals=new Map(),previews=new Map();
  for(const id of ids){
   const task=tasks.find(v=>v.id===id);if(!task)continue;
-  const state={importance:task.importance,urgency:task.urgency,workload:task.workload};
+  const state={importance:task.importance,deadline:task.deadline,workload:task.workload};
   originals.set(id,state);previews.set(id,{...state});
  }
  if(!originals.has(h.id))return false;
  bubbleDrag={...h,pointerId:e.pointerId,screenX:e.clientX,screenY:e.clientY,originals,previews,moved:false,
-  primaryStart:{importance:t.importance,urgency:t.urgency},
+  primaryStart:{importance:t.importance,day:localDayIndex(t.deadline)},
   offset:{x:h.p.x-h.cx,y:h.p.y-h.cy},startDistance:Math.hypot(h.p.x-h.cx,h.p.y-h.cy),radius:h.r};
  $('chart').setPointerCapture(e.pointerId);$('chart').style.cursor=h.cursor;return true;
 }
@@ -463,10 +463,11 @@ function moveBubbleDrag(e){
  const center={x:Math.max(chartBox.left,Math.min(chartBox.right,p.x-g.offset.x)),y:Math.max(chartBox.top,Math.min(chartBox.bottom,p.y-g.offset.y))};
  const pos=mapCoordinateAt(center);
  if(pos){
-  const dx=pos.importance-g.primaryStart.importance,dy=pos.urgency-g.primaryStart.urgency;
+  const dx=pos.importance-g.primaryStart.importance,dayShift=Math.round(pos.day-g.primaryStart.day);
   for(const [id,original] of g.originals){
    const preview=g.previews.get(id);if(!preview)continue;
-   preview.importance=original.importance+dx;preview.urgency=original.urgency+dy;
+   preview.importance=original.importance+dx;
+   preview.deadline=deadlineOnDay(original.deadline,localDayIndex(original.deadline)+dayShift);
   }
  }
  requestChartRefresh();
@@ -477,7 +478,7 @@ function finishBubbleDrag(commit=true){
  if(svg.hasPointerCapture(g.pointerId))svg.releasePointerCapture(g.pointerId);
  suppressChartClickUntil=Date.now()+600;
  if(commit&&g.moved){
-  const unchanged=[...g.originals].every(([id,o])=>{const t=tasks.find(v=>v.id===id);return t&&['importance','urgency','workload'].every(k=>t[k]===o[k]);});
+  const unchanged=[...g.originals].every(([id,o])=>{const t=tasks.find(v=>v.id===id);return t&&['importance','deadline','workload'].every(k=>t[k]===o[k]);});
   if(unchanged){
    for(const [id,preview] of g.previews){const t=tasks.find(v=>v.id===id);if(t)Object.assign(t,preview);}
    save();
@@ -544,7 +545,7 @@ function installChartInteraction(){
    const span=viewport.x[1]-viewport.x[0],dx=step*span;
    setViewport({x:viewport.x.map(v=>v+dx),y:[...viewport.y]});
   }else{
-   const span=viewport.y[1]-viewport.y[0],dy=-step*span;
+   const span=viewport.y[1]-viewport.y[0],dy=step*span;
    setViewport({x:[...viewport.x],y:viewport.y.map(v=>v+dy)});
   }
   requestChartRefresh();
@@ -587,8 +588,8 @@ function installChartInteraction(){
   let factor=b&&dragState.distance?dragState.distance/Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)):1;factor=Math.max(.05,Math.min(20,factor));
   const dx=cx-dragState.x,dy=cy-dragState.y;if(Math.hypot(dx,dy)<3&&Math.abs(factor-1)<.01&&!dragState.moved)return;
   cancelHold();dragState.moved=true;clickTaskId=null;suppressChartClickUntil=Date.now()+400;svg.classList.add('dragging');
-  const v=dragState.viewport,box=chartBox,fx=(dragState.x-box.left)/(box.right-box.left),fy=(box.bottom-dragState.y)/(box.bottom-box.top),next={};
-  for(const [axis,f,d] of [['x',fx,-dx/(box.right-box.left)],['y',fy,dy/(box.bottom-box.top)]]){
+  const v=dragState.viewport,box=chartBox,fx=(dragState.x-box.left)/(box.right-box.left),fy=(dragState.y-box.top)/(box.bottom-box.top),next={};
+  for(const [axis,f,d] of [['x',fx,-dx/(box.right-box.left)],['y',fy,-dy/(box.bottom-box.top)]]){
    const [lo,hi]=v[axis],span=hi-lo,anchor=axisValue(v[axis],f);
    next[axis]=[anchor+(lo-anchor)*factor+d*span*factor,anchor+(hi-anchor)*factor+d*span*factor];
   }
@@ -618,14 +619,14 @@ function installChartInteraction(){
   if(radiusEdit||bubbleDrag||selectionDrag)return;
   if(e.target!==svg)return;
   if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();const p={x:(chartBox.left+chartBox.right)/2,y:(chartBox.top+chartBox.bottom)/2},r=svg.getBoundingClientRect();openChartCreateMenu(p,(r.left+r.right)/2,(r.top+r.bottom)/2);return;}
-  const shifts={ArrowLeft:[-.15,0],ArrowRight:[.15,0],ArrowUp:[0,.15],ArrowDown:[0,-.15]};
+  const shifts={ArrowLeft:[-.15,0],ArrowRight:[.15,0],ArrowUp:[0,-.15],ArrowDown:[0,.15]};
   if(shifts[e.key]){e.preventDefault();const [dx,dy]=shifts[e.key];setViewport({x:viewport.x.map(v=>v+dx*(viewport.x[1]-viewport.x[0])),y:viewport.y.map(v=>v+dy*(viewport.y[1]-viewport.y[0]))});requestChartRefresh();}
   else if(['+','=','-'].includes(e.key)){e.preventDefault();zoomViewport(e.key==='-'?1.25:.8,{x:(chartBox.left+chartBox.right)/2,y:(chartBox.top+chartBox.bottom)/2});}
  });
  $('zoomIn').onclick=()=>zoomViewport(.8,{x:(chartBox.left+chartBox.right)/2,y:(chartBox.top+chartBox.bottom)/2});
  $('zoomOut').onclick=()=>zoomViewport(1.25,{x:(chartBox.left+chartBox.right)/2,y:(chartBox.top+chartBox.bottom)/2});
  $('resetChart').onclick=resetViewport;$('fitChart').onclick=fitAllTasks;
- $('applyRange').onclick=()=>{const x=[$('xMin').valueAsNumber,$('xMax').valueAsNumber],y=[$('yMin').valueAsNumber,$('yMax').valueAsNumber];if(![...x,...y].every(Number.isFinite)||x[0]>=x[1]||y[0]>=y[1]){notify('范围必须是有效数字，且最小值小于最大值');return;}setViewport({x,y});renderLinked(Date.now());};
+ $('applyRange').onclick=()=>{const x=[$('xMin').valueAsNumber,$('xMax').valueAsNumber],y=[dayFromInput($('yMin').value),dayFromInput($('yMax').value)];if(![...x,...y].every(Number.isFinite)||x[0]>=x[1]||y[0]>=y[1]){notify('范围必须有效，且最早日期必须早于最晚日期');return;}setViewport({x,y});renderLinked(Date.now());};
  $('listScope').onchange=()=>renderLinked(Date.now());
  window.addEventListener('blur',()=>{finishRadiusEdit(false);finishBubbleDrag(false);finishSelectionDrag(false);cancelHold();closeChartMenu();activePointers.clear();dragState=null;ctrlPanKey=false;svg.style.cursor='';});
 }
@@ -638,14 +639,14 @@ let chartMenuId=null,chartCreatePoint=null,mapHoldCancel=()=>{};
 function closeChartMenu(restore=false){$('chartMenu').hidden=true;chartCreatePoint=null;chartMenuId=null;if(restore)$('chart').focus();}
 function mapCoordinateAt(p){
  if(!onPlot(p))return null;
- const fx=(p.x-chartBox.left)/(chartBox.right-chartBox.left),fy=(chartBox.bottom-p.y)/(chartBox.bottom-chartBox.top);
- const importance=axisValue(viewport.x,fx),urgency=axisValue(viewport.y,fy);
- return Number.isFinite(importance)&&Number.isFinite(urgency)?{importance,urgency}:null;
+ const fx=(p.x-chartBox.left)/(chartBox.right-chartBox.left),fy=(p.y-chartBox.top)/(chartBox.bottom-chartBox.top);
+ const importance=axisValue(viewport.x,fx),day=Math.round(axisValue(viewport.y,fy));
+ return Number.isFinite(importance)&&Number.isFinite(day)?{importance,day}:null;
 }
 function openChartCreateMenu(p,x,y){
  const point=mapCoordinateAt(p);if(!point)return;
  chartCreatePoint=point;suppressChartClickUntil=Date.now()+800;
- $('chartMenuTitle').textContent='重要性 '+urgencyLabel(point.importance)+' · 迫切性 '+urgencyLabel(point.urgency);
+ $('chartMenuTitle').textContent='重要性 '+numberLabel(point.importance)+' · 截止日期 '+dayLabel(point.day);
  const menu=$('chartMenu');menu.hidden=false;
  menu.style.left=Math.max(8,Math.min(x,window.innerWidth-menu.offsetWidth-8))+'px';
  menu.style.top=Math.max(8,Math.min(y,window.innerHeight-menu.offsetHeight-8))+'px';
@@ -654,7 +655,7 @@ function openChartCreateMenu(p,x,y){
 function createTaskAtMenu(){
  const point=chartCreatePoint;if(!point)return;
  closeChartMenu();
- const t={id:uid(),title:'',details:'',category:'工作',importance:point.importance,urgency:point.urgency,workload:1,deadline:new Date(Date.now()+DAY).toISOString(),done:false,difficulty:5,detailsMode:'text',draft:true};
+ const t={id:uid(),title:'',details:'',category:'工作',importance:point.importance,workload:1,deadline:newDeadlineOnDay(point.day),done:false,difficulty:5,detailsMode:'text',draft:true};
  tasks.push(t);save();setSelectedTasks([t.id]);render();
  notify('已在当前位置创建空白日程；双击空白标签可直接原位填写标题。');
 }
