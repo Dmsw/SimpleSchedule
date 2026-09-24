@@ -29,5 +29,10 @@ function setup(values=[1,3,5,7,9]){
  c=setup();let resolve;c.fetch=()=>new Promise(r=>resolve=r);let pending=c.runEditorAI('importance');c.tasks[0].importance=100;resolve({ok:true,json:async()=>({choices:[{message:{content:'{"relation":"equal"}'}}]})});await pending;assert.equal(c.$('taskImportance').value,'0');assert(c.$('editorAIStatus').textContent.includes('已变化'));
  c=setup();c.fetch=()=>new Promise(r=>resolve=r);pending=c.runEditorAI('importance');c.cancelEditorAI();resolve({ok:true,json:async()=>({choices:[{message:{content:'{"relation":"equal"}'}}]})});await pending;assert.equal(c.$('taskImportance').value,'0');
  c=setup();c.responses=[{details:'新的细节'}];await c.runEditorAI('details');assert.equal(c.$('taskDetails').value,'新的细节');assert.equal(c.requests.length,1);
+ c=setup();c.responses=[{relation:'unknown'},{relation:'equal'}];await c.runEditorAI('importance');assert.equal(c.requests.length,2);assert.equal(c.$('taskImportance').value,'7');
+ c=setup([1]);c.responses=[{relation:'equal'}];await c.runEditorAI('workload');assert(c.$('editorAIStatus').textContent.includes('与当前值相同'));
+ c=setup([]);await c.runEditorAI('importance');assert(c.$('editorAIStatus').textContent.includes('没有其他有效参照'));
+ c=setup([1,2]);c.responses=[{relation:'unknown'},{relation:'unknown'}];await c.runEditorAI('importance');assert.equal(c.requests.length,2);assert(c.$('editorAIStatus').textContent.includes('模型无法比较'));
+ c=setup([1]);c.$('taskTitle').value='';c.$('editorAIText').value='写论文实验部分';c.responses=[{relation:'equal'}];await c.runEditorAI('importance');assert(c.requests[0].messages[1].content.includes('写论文实验部分'));assert.equal(c.$('taskImportance').value,'1');
  console.log('PASS median search, both attributes, ties, duplicates, signed values, boundaries, self exclusion, parse/completion integration, failures, stale data, cancellation, other fields');
 })().catch(e=>{console.error(e);process.exitCode=1});
