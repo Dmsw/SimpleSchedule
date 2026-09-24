@@ -341,6 +341,7 @@ function draw(a,outside,now){
   if(viewport.x[0]<=0&&viewport.x[1]>=0)s+=`<line x1="${sx(0)}" x2="${sx(0)}" y1="${T}" y2="${B}" stroke="#81968c" stroke-dasharray="5 4"/>`;
   s+=`<text x="${L}" y="25" fill="#687587" font-size="14">时间轴 ↓</text><text x="${(L+R)/2}" y="${chartBox.height-17}" text-anchor="middle" fill="#687587" font-size="14">重要性 →</text>`;
   s+=edgeTags(outside,now,sx,sy);
+  if(bubbleDrag?.snapGuide){const g=bubbleDrag.snapGuide;s+=`<line x1="${g.x}" x2="${g.x}" y1="${Math.max(T,g.y1-18)}" y2="${Math.min(B,g.y2+18)}" stroke="#286c59" stroke-width="1.5" stroke-dasharray="5 4" opacity=".75" pointer-events="none"/>`;}
   s+=`<g clip-path="url(#plotClip)">`;
   const size=t=>original?t.workload:t.importance,radii=taskRadii(a,original);
   for(const t of [...a].sort((a,b)=>size(b)-size(a))){const [x,y]=coordinates(t,now),r=radii.get(t.id);s+=`<circle class="bubble" tabindex="0" role="button" aria-label="${esc(t.title)}，重要性${t.importance}，截止${dayLabel(y)}，困难度${t.difficulty}，任务量${t.workload}小时" data-edit="${esc(t.id)}" cx="${sx(x)}" cy="${sy(y)}" r="${r}" fill="${difficultyColor(t.difficulty)}" fill-opacity="${t.done ? .25 : .72}" stroke="${difficultyColor(t.difficulty)}" stroke-width="1.5"><title>${esc(t.title)}\n${t.workload} 小时 · 重要性 ${t.importance} · 截止 ${dayLabel(y)} · 困难度 ${t.difficulty}\n${t.done?'已完成':countdown(t.deadline,now)}</title></circle>`;}
@@ -348,7 +349,7 @@ function draw(a,outside,now){
   const focusId=document.activeElement?.dataset?.edit;$('chart').innerHTML=s;if(focusId)[...$('chart').querySelectorAll('[data-edit]')].find(el=>el.dataset.edit===focusId)?.focus();
   $('chart').setAttribute('aria-label','重要性与截止日期地图。越早截止越靠上；鼠标拖动空白区域框选，滚轮平移，Ctrl 加滚轮缩放');
   $('legend').innerHTML='<span>困难度</span>'+difficultyColors.map((c,i)=>`<span><i style="background:${c}"></i>${i+1}</span>`).join('');
-  $('chartNote').textContent='横轴重要性，纵轴时间轴（最小刻度 1 天）；圆圈大小表示任务量并与地图坐标同步缩放，颜色表示困难度。鼠标左键拖动空白区域框选；拖动任意已选圆内部可同时移动全部已选圆，纵向按整天调整截止日期；按住圆圈边界并上下移动鼠标调整半径，松开后确认并退出，多选时会同时缩放所有已选圆。按住 Ctrl 时光标变为抓取手势，左键拖动平移视图。滚轮默认上下移动视图，Shift + 滚轮左右移动，Ctrl + 滚轮以鼠标位置为中心缩放。右键地图按当前位置创建日程；视图外任务的标签会投影到对应方向的地图边框。';
+  $('chartNote').textContent='横轴重要性，纵轴时间轴（最小刻度 1 天）；圆圈大小表示任务量并与地图坐标同步缩放，颜色表示困难度。鼠标左键拖动空白区域框选；拖动任意已选圆内部可同时移动全部已选圆，靠近其他日程的中心 X 坐标时会自动竖直对齐，纵向按整天调整截止日期；按住圆圈边界并上下移动鼠标调整半径，松开后确认并退出，多选时会同时缩放所有已选圆。按住 Ctrl 时光标变为抓取手势，左键拖动平移视图。滚轮默认上下移动视图，Shift + 滚轮左右移动，Ctrl + 滚轮以鼠标位置为中心缩放。右键地图按当前位置创建日程；视图外任务的标签会投影到对应方向的地图边框。';
   if(mobileMode)$('chartNote').textContent='长按地图按当前位置创建日程；单指拖动，双指缩放。单击圆圈查看详情；双击标签可直接原位修改标题。横轴重要性，纵轴时间轴；视图外任务的标签显示在对应方向的地图边框。';
 }
 function chartPoint(e){const svg=$('chart'),ctm=svg.getScreenCTM();if(!ctm)return null;const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(ctm.inverse());return{x:p.x,y:p.y};}
@@ -466,7 +467,20 @@ function moveBubbleDrag(e){
  const center={x:Math.max(chartBox.left,Math.min(chartBox.right,p.x-g.offset.x)),y:Math.max(chartBox.top,Math.min(chartBox.bottom,p.y-g.offset.y))};
  const pos=mapCoordinateAt(center);
  if(pos){
-  const dx=pos.importance-g.primaryStart.importance,dayShift=Math.round(pos.day-g.primaryStart.day);
+  let snappedImportance=pos.importance,best=null;
+  const xScale=(chartBox.right-chartBox.left)/(viewport.x[1]-viewport.x[0]),yScale=(chartBox.bottom-chartBox.top)/(viewport.y[1]-viewport.y[0]),snapPx=12;
+  for(const task of tasks){
+   if(g.originals.has(task.id)||!insideViewport(task,Date.now()))continue;
+   const xGap=Math.abs((task.importance-pos.importance)*xScale);if(xGap>snapPx)continue;
+   const day=localDayIndex(task.deadline),yGap=Math.abs((day-pos.day)*yScale);
+   if(!best||yGap<best.yGap||(yGap===best.yGap&&xGap<best.xGap))best={task,xGap,yGap,day};
+  }
+  if(best){
+   snappedImportance=best.task.importance;
+   const sx=chartBox.left+axisFraction(snappedImportance,viewport.x)*(chartBox.right-chartBox.left),sy1=chartBox.top+axisFraction(pos.day,viewport.y)*(chartBox.bottom-chartBox.top),sy2=chartBox.top+axisFraction(best.day,viewport.y)*(chartBox.bottom-chartBox.top);
+   g.snapGuide={x:sx,y1:Math.min(sy1,sy2),y2:Math.max(sy1,sy2)};
+  }else g.snapGuide=null;
+  const dx=snappedImportance-g.primaryStart.importance,dayShift=Math.round(pos.day-g.primaryStart.day);
   for(const [id,original] of g.originals){
    const preview=g.previews.get(id);if(!preview)continue;
    preview.importance=original.importance+dx;
