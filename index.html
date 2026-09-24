@@ -388,13 +388,13 @@ function startRadiusEdit(e,h){
   originals.set(id,state);previews.set(id,{...state});radii.set(id,workloadRadius(task.workload));
  }
  if(!originals.size)return false;
- radiusEdit={primaryId:h.id,startY:e.clientY,lastY:e.clientY,originals,previews,radii,moved:false};
- suppressChartClickUntil=Date.now()+800;$('chart').style.cursor='ns-resize';
- notify(originals.size>1?'半径修改模式：上下移动鼠标可同时缩放 '+originals.size+' 个圆圈；再次单击确认，Esc 取消。':'半径修改模式：上下移动鼠标调整半径；再次单击确认，Esc 取消。');
+ radiusEdit={primaryId:h.id,pointerId:e.pointerId,startY:e.clientY,lastY:e.clientY,originals,previews,radii,moved:false};
+ suppressChartClickUntil=Date.now()+800;const svg=$('chart');svg.setPointerCapture(e.pointerId);svg.style.cursor='ns-resize';
+ notify(originals.size>1?'按住并上下移动鼠标可同时缩放 '+originals.size+' 个圆圈；松开确认，Esc 取消。':'按住并上下移动鼠标调整半径；松开确认，Esc 取消。');
  highlightSelection();return true;
 }
 function moveRadiusEdit(e){
- const g=radiusEdit;if(!g||e.pointerType==='touch')return;
+ const g=radiusEdit;if(!g||e.pointerId!==g.pointerId||e.pointerType==='touch')return;
  const dy=g.startY-e.clientY;
  if(!g.moved&&Math.abs(dy)<2)return;
  g.moved=true;g.lastY=e.clientY;
@@ -408,7 +408,7 @@ function moveRadiusEdit(e){
 }
 function finishRadiusEdit(commit=true){
  const g=radiusEdit;if(!g)return;
- radiusEdit=null;const svg=$('chart');svg.style.cursor='';
+ radiusEdit=null;const svg=$('chart');svg.style.cursor='';if(svg.hasPointerCapture(g.pointerId))svg.releasePointerCapture(g.pointerId);
  if(commit&&g.moved){
   const unchanged=[...g.originals].every(([id,o])=>{const t=tasks.find(v=>v.id===id);return t&&['importance','urgency','workload'].every(k=>t[k]===o[k]);});
   if(unchanged){
