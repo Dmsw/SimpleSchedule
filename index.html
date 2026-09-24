@@ -240,7 +240,7 @@ function renderLinked(now=Date.now()){
 }
 function updateCountdowns(now){const byId=new Map(tasks.map(t=>[t.id,t]));document.querySelectorAll('[data-count]').forEach(el=>{const t=byId.get(el.dataset.count);if(!t)return;const delta=Date.parse(t.deadline)-now;el.textContent=t.done?'已完成':countdown(t.deadline,now);el.className='countdown '+(!t.done?(delta<0?'late':delta<=DAY?'soon':''):'muted');});}
 // Min-max normalization uses only the tasks whose centers are in the viewport.
-let selectedTaskId=null,pinnedTaskId=null,linkFrame=0,hoverPointer=null,linkSegments=[];
+let selectedTaskId=null,pinnedTaskId=null,linkFrame=0,hoverPointer=null,linkSegments=[],selectedTaskIds=new Set(),selectionDrag=null;
 const BUBBLE_REFERENCE_SPAN=20,BUBBLE_REFERENCE_SCALE=Math.min((chartBox.right-chartBox.left)/BUBBLE_REFERENCE_SPAN,(chartBox.bottom-chartBox.top)/BUBBLE_REFERENCE_SPAN),MIN_BUBBLE_DATA_RADIUS=6/BUBBLE_REFERENCE_SCALE;
 function bubbleCoordinateScale(){
  const xs=(chartBox.right-chartBox.left)/(viewport.x[1]-viewport.x[0]),ys=(chartBox.bottom-chartBox.top)/(viewport.y[1]-viewport.y[0]);
@@ -256,7 +256,7 @@ function minimumBubbleRadius(){return MIN_BUBBLE_DATA_RADIUS*bubbleCoordinateSca
 function taskRadii(visible){return new Map(visible.map(t=>[t.id,workloadRadius(bubblePreview(t).workload)]));}
 function requestLinks(){if(!linkFrame)linkFrame=requestAnimationFrame(()=>{linkFrame=0;drawLinks();});}
 function hoveredTaskAt(x,y){
-  if(dragState||typeof document.elementFromPoint!=='function')return null;
+  if(dragState||selectionDrag||bubbleDrag||typeof document.elementFromPoint!=='function')return null;
   const el=document.elementFromPoint(x,y),circle=el?.closest?.('#chart .bubble'),card=el?.closest?.('#rows [data-task-card]');
   return circle?.dataset.edit||card?.dataset.taskCard||hoveredLinkAt(x,y,el);
 }
@@ -269,11 +269,15 @@ function hoveredLinkAt(x,y,el){
 function refreshHover(){if(pinnedTaskId&&!tasks.some(t=>t.id===pinnedTaskId))pinnedTaskId=null;if(hoverPointer)selectedTaskId=hoveredTaskAt(hoverPointer.x,hoverPointer.y)||pinnedTaskId;}
 function highlightSelection(){
   refreshHover();
-  for(const c of $('chart').querySelectorAll('.bubble')){const yes=c.dataset.edit===selectedTaskId;c.classList.toggle('selected-bubble',yes);c.setAttribute('aria-pressed',String(yes));}
-  for(const card of $('rows').querySelectorAll('[data-task-card]')){const yes=card.dataset.taskCard===selectedTaskId;card.classList.toggle('selected-card',yes);const button=card.querySelector('[data-select]');if(button){button.setAttribute('aria-pressed',String(yes));button.textContent=yes?'已选中':'选中';}}
+  for(const c of $('chart').querySelectorAll('.bubble')){const yes=selectedTaskIds.has(c.dataset.edit)||c.dataset.edit===selectedTaskId;c.classList.toggle('selected-bubble',yes);c.setAttribute('aria-pressed',String(selectedTaskIds.has(c.dataset.edit)));}
+  for(const card of $('rows').querySelectorAll('[data-task-card]')){const yes=selectedTaskIds.has(card.dataset.taskCard)||card.dataset.taskCard===selectedTaskId;card.classList.toggle('selected-card',yes);const button=card.querySelector('[data-select]');if(button){const picked=selectedTaskIds.has(card.dataset.taskCard);button.setAttribute('aria-pressed',String(picked));button.textContent=picked?'已选中':'选中';}}
+}
+function setSelectedTasks(ids){
+ selectedTaskIds=new Set(ids.filter(id=>tasks.some(t=>t.id===id)));
+ pinnedTaskId=null;selectedTaskId=null;highlightSelection();requestLinks();
 }
 function selectTask(id,reveal=false){
-  pinnedTaskId=id;selectedTaskId=id;highlightSelection();
+  setSelectedTasks([id]);pinnedTaskId=id;selectedTaskId=id;highlightSelection();
   if(reveal&&selectedTaskId){const card=[...$('rows').querySelectorAll('[data-task-card]')].find(el=>el.dataset.taskCard===id);card?.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});}
   requestLinks();
 }
