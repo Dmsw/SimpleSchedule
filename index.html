@@ -249,11 +249,11 @@ function updateRangeControls(){
  if(document.activeElement!==$('yMax'))$('yMax').value=dayInput(Math.floor(viewport.y[1]));
 }
 function renderLinked(now=Date.now()){
-  const a=filtered(),visible=viewportTasks(a,now);
+  const a=filtered(),visible=viewportTasks(a,now,'visible'),outside=viewportTasks(a,now,'outside');
   lastVisibleIds=visible.map(t=>t.id).join('|');
   $('chartCount').textContent='范围内 '+visible.length+' / 筛选后 '+a.length+' 项';
-  if(selectedTaskId&&!visible.some(t=>t.id===selectedTaskId))selectedTaskId=null;
-  draw(visible,now);updateRangeControls();highlightSelection();lastChartUpdate=now;
+  if(selectedTaskId&&!a.some(t=>t.id===selectedTaskId))selectedTaskId=null;
+  draw(visible,outside,now);updateRangeControls();highlightSelection();lastChartUpdate=now;
 }
 function updateCountdowns(now){const byId=new Map(tasks.map(t=>[t.id,t]));document.querySelectorAll('[data-count]').forEach(el=>{const t=byId.get(el.dataset.count);if(!t)return;const delta=Date.parse(t.deadline)-now;el.textContent=t.done?'已完成':countdown(t.deadline,now);el.className='countdown '+(!t.done?(delta<0?'late':delta<=DAY?'soon':''):'muted');});}
 // Min-max normalization uses only the tasks whose centers are in the viewport.
@@ -324,7 +324,7 @@ function installLinks(){
   if(document.fonts?.ready)document.fonts.ready.then(requestLinks);
 }
 
-function draw(a,now){
+function draw(a,outside,now){
   a=a.map(bubblePreview);
   const {left:L,right:R,top:T,bottom:B}=chartBox,original=isOriginal(),sx=v=>L+axisFraction(v,viewport.x)*(R-L),sy=v=>T+axisFraction(v,viewport.y)*(B-T);
   const today=todayDay(),splitX=Math.max(L,Math.min(R,sx(0))),splitY=Math.max(T,Math.min(B,sy(today)));
@@ -341,12 +341,12 @@ function draw(a,now){
   s+=`<text x="${L}" y="25" fill="#687587" font-size="14">截止日期 · 越早越靠上</text><text x="${(L+R)/2}" y="${chartBox.height-17}" text-anchor="middle" fill="#687587" font-size="14">重要性 →</text><g clip-path="url(#plotClip)">`;
   const size=t=>original?t.workload:t.importance,radii=taskRadii(a,original);
   for(const t of [...a].sort((a,b)=>size(b)-size(a))){const [x,y]=coordinates(t,now),r=radii.get(t.id);s+=`<circle class="bubble" tabindex="0" role="button" aria-label="${esc(t.title)}，重要性${t.importance}，截止${dayLabel(y)}，困难度${t.difficulty}，任务量${t.workload}小时" data-edit="${esc(t.id)}" cx="${sx(x)}" cy="${sy(y)}" r="${r}" fill="${difficultyColor(t.difficulty)}" fill-opacity="${t.done ? .25 : .72}" stroke="${difficultyColor(t.difficulty)}" stroke-width="1.5"><title>${esc(t.title)}\n${t.workload} 小时 · 重要性 ${t.importance} · 截止 ${dayLabel(y)} · 困难度 ${t.difficulty}\n${t.done?'已完成':countdown(t.deadline,now)}</title></circle>`;}
-  s+='</g>';s+=mobileTags(a,now,sx,sy,radii);if(!a.length)s+=`<text x="${(L+R)/2}" y="${(T+B)/2}" text-anchor="middle" fill="#87929d" font-size="16">此范围内暂无任务 · 可滚动或缩放探索</text>`;
+  s+='</g>';s+=mobileTags(a,now,sx,sy,radii);s+=edgeTags(outside,now,sx,sy);if(!a.length)s+=`<text x="${(L+R)/2}" y="${(T+B)/2}" text-anchor="middle" fill="#87929d" font-size="16">此范围内暂无任务 · 可滚动或缩放探索</text>`;
   const focusId=document.activeElement?.dataset?.edit;$('chart').innerHTML=s;if(focusId)[...$('chart').querySelectorAll('[data-edit]')].find(el=>el.dataset.edit===focusId)?.focus();
   $('chart').setAttribute('aria-label','重要性与截止日期地图。越早截止越靠上；鼠标拖动空白区域框选，滚轮平移，Ctrl 加滚轮缩放');
   $('legend').innerHTML='<span>困难度</span>'+difficultyColors.map((c,i)=>`<span><i style="background:${c}"></i>${i+1}</span>`).join('');
-  $('chartNote').textContent='横轴重要性，纵轴截止日期（越早越靠上，最小刻度 1 天）；圆圈大小表示任务量并与地图坐标同步缩放，颜色表示困难度。鼠标左键拖动空白区域框选；拖动任意已选圆内部可同时移动全部已选圆，纵向按整天调整截止日期；按住圆圈边界并上下移动鼠标调整半径，松开后确认并退出，多选时会同时缩放所有已选圆。按住 Ctrl 时光标变为抓取手势，左键拖动平移视图。滚轮默认上下移动视图，Shift + 滚轮左右移动，Ctrl + 滚轮以鼠标位置为中心缩放。右键地图按当前位置创建日程。';
-  if(mobileMode)$('chartNote').textContent='长按地图按当前位置创建日程；单指拖动，双指缩放。单击圆圈查看详情；双击标签可直接原位修改标题。横轴重要性，纵轴截止日期，越早越靠上。';
+  $('chartNote').textContent='横轴重要性，纵轴截止日期（越早越靠上，最小刻度 1 天）；圆圈大小表示任务量并与地图坐标同步缩放，颜色表示困难度。鼠标左键拖动空白区域框选；拖动任意已选圆内部可同时移动全部已选圆，纵向按整天调整截止日期；按住圆圈边界并上下移动鼠标调整半径，松开后确认并退出，多选时会同时缩放所有已选圆。按住 Ctrl 时光标变为抓取手势，左键拖动平移视图。滚轮默认上下移动视图，Shift + 滚轮左右移动，Ctrl + 滚轮以鼠标位置为中心缩放。右键地图按当前位置创建日程；视图外任务的标签会投影到对应方向的地图边框。';
+  if(mobileMode)$('chartNote').textContent='长按地图按当前位置创建日程；单指拖动，双指缩放。单击圆圈查看详情；双击标签可直接原位修改标题。横轴重要性，纵轴截止日期，越早越靠上；视图外任务的标签显示在对应方向的地图边框。';
 }
 function chartPoint(e){const svg=$('chart'),ctm=svg.getScreenCTM();if(!ctm)return null;const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(ctm.inverse());return{x:p.x,y:p.y};}
 function onPlot(p){return p&&p.x>=chartBox.left&&p.x<=chartBox.right&&p.y>=chartBox.top&&p.y<=chartBox.bottom;}
