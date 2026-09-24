@@ -2,7 +2,8 @@ const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),pat
 const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 const code=html.slice(html.indexOf('const editorAIFields='),html.indexOf('function initEditorAI(){'));
 function setup(values=[1,3,5,7,9]){
- const nodes={},c={AbortController,setTimeout,clearTimeout,console,tasks:values.map((v,i)=>({id:String(i),title:'任务'+i,details:'完整细节'+i,importance:v,workload:v,done:i===0})),window:{},detailsMode:'text',updateDifficulty(){},setDetailsMode(){},localInput:v=>v,aiTimeContext:()=> '当前日期 2026-09-24',aiSettings:()=>({base:'https://example.test/v1',model:'test',key:'test'}),$(id){return nodes[id]??={value:'',hidden:false,open:id==='editor'};}};
+ const nodes={},c={AbortController,setTimeout,clearTimeout,console,tasks:values.map((v,i)=>({id:String(i),title:'任务'+i,details:'完整细节'+i,importance:v,workload:v,done:i===0})),logs:[],window:{},detailsMode:'text',updateDifficulty(){},setDetailsMode(){},localInput:v=>v,aiTimeContext:()=> '当前日期 2026-09-24',aiSettings:()=>({base:'https://example.test/v1',model:'test',key:'test'}),$(id){return nodes[id]??={value:'',hidden:false,open:id==='editor'};}};
+ c.console={groupCollapsed:label=>c.logs.push(label),log:value=>c.logs.push(value),table:rows=>c.logs.push(rows),groupEnd(){}};
  vm.createContext(c);vm.runInContext(code,c);
  c.$('taskTitle').value='当前日程';c.$('taskImportance').value='0';c.$('taskWorkload').value='1';
  c.responses=[];c.requests=[];c.fetch=async(u,o)=>{c.requests.push(JSON.parse(o.body));const reply=c.responses.shift();if(reply instanceof Error)throw reply;return {ok:true,json:async()=>({choices:[{message:{content:JSON.stringify(reply)}}]})};};
@@ -11,7 +12,7 @@ function setup(values=[1,3,5,7,9]){
 (async()=>{
  let c=setup(),seen=[];
  let value=await c.estimateEditorAIByMedian('importance',{},c.tasks,async(f,t,r)=>{seen.push(r.importance);return 6>r.importance?'greater':'less'});
- assert.deepEqual(seen,[5,9,7]);assert.equal(value,6);
+ assert.deepEqual(seen,[5,9,7]);assert.equal(value,6);assert(c.logs.some(x=>typeof x==='string'&&x.includes('最终估计')));assert(c.logs.some(x=>Array.isArray(x)&&x.length===5));
  seen=[];value=await c.estimateEditorAIByMedian('workload',{},c.tasks,async(f,t,r)=>{seen.push(r.workload);return 'less'});assert.deepEqual(seen,[5,3,1]);assert.equal(value,.9);
  value=await c.estimateEditorAIByMedian('importance',{},c.tasks,async()=> 'greater');assert.equal(value,10);
  value=await c.estimateEditorAIByMedian('importance',{},c.tasks,async()=> 'equal');assert.equal(value,5);
