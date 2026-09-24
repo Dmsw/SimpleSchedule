@@ -48,6 +48,7 @@ body.mobile-mode .twocol{grid-template-columns:1fr}
 #mobileDetail .formfoot{display:flex;flex-wrap:wrap;gap:8px}
 #editorAIEntry summary{cursor:pointer;padding:8px 0}#editorAIText{margin:8px 0;min-height:80px;width:100%;max-width:100%;box-sizing:border-box;}#editorAIStatus:not(:empty){margin:8px 0}#editorAIPopup{position:fixed;z-index:30;padding:4px;background:white;border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 18px #0002;max-width:calc(100vw - 32px)}#editorAIPopup button{min-height:44px;white-space:nowrap}#editorAIPopup[hidden]{display:none}
 #scheduleStats{margin:16px 0}#scheduleStats>summary{cursor:pointer;color:var(--muted);padding:8px 0;width:fit-content}#scheduleStats .stats{margin:10px 0}.linked-layout{display:block}.chart-panel{position:static}main{max-width:1280px}#listView,#taskLinks,#sortBy,#direction{display:none!important}
+.bubble-editing,.bubble-editing *{cursor:inherit!important}
 </style></head><body>
 <header><div class="brand"><div class="mark">序</div><div><h1>本地日程</h1><div class="sub">让重要的事，清晰有序。</div></div></div><div class="actions" id="mobileHeaderActions"><button id="aiBtn">✦ AI 助手</button><button id="helpBtn">使用说明</button><button id="exportBtn">导出备份</button><button id="importBtn">导入备份</button></div><button id="mobileMenu" class="mobile-only" aria-expanded="false" aria-controls="mobileHeaderActions">菜单</button></header><div style="padding:0 12px"><button id="mobileFilters" class="mobile-only" aria-expanded="false" aria-controls="mobileFilterPanel">搜索与筛选</button></div>
 <svg id="taskLinks" aria-hidden="true"></svg>
@@ -224,8 +225,8 @@ function insideViewport(t,now){const [x,y]=coordinates(t,now);return x>=viewport
 function viewportTasks(a,now,scope='visible'){return a.filter(t=>scope==='all'||insideViewport(t,now)===(scope==='visible'));}
 function urgencyLabel(n){return String(Number(n.toPrecision(8)));}
 function limitDomain(axis,range){return [...range];}
-function setViewport(next){if(![...next.x,...next.y].every(Number.isFinite)||next.x[0]>=next.x[1]||next.y[0]>=next.y[1])return;viewport={x:limitDomain('x',next.x),y:limitDomain('y',next.y)};}
-function resetViewport(){viewport={x:[-10,10],y:[-10,10]};renderLinked(Date.now());}
+function setViewport(next){if(bubbleDrag)return;if(![...next.x,...next.y].every(Number.isFinite)||next.x[0]>=next.x[1]||next.y[0]>=next.y[1])return;viewport={x:limitDomain('x',next.x),y:limitDomain('y',next.y)};}
+function resetViewport(){if(bubbleDrag)finishBubbleDrag(false);viewport={x:[-10,10],y:[-10,10]};renderLinked(Date.now());}
 function fitAllTasks(){const a=filtered();if(!a.length){resetViewport();return;}let xmin=Infinity,xmax=-Infinity,ymin=Infinity,ymax=-Infinity;for(const t of a){xmin=Math.min(xmin,t.importance);xmax=Math.max(xmax,t.importance);ymin=Math.min(ymin,t.urgency);ymax=Math.max(ymax,t.urgency);}setViewport({x:paddedDomain(xmin,xmax),y:paddedDomain(ymin,ymax)});renderLinked(Date.now());}
 function focusTask(id){const t=tasks.find(t=>t.id===id);if(!t)return;const [x,y]=coordinates(t,Date.now()),xs=viewport.x[1]-viewport.x[0],ys=viewport.y[1]-viewport.y[0];setViewport({x:[x-xs/2,x+xs/2],y:[y-ys/2,y+ys/2]});$('listScope').value='visible';renderLinked(Date.now());}
 function niceTicks(lo,hi,target=5){const raw=hi/target-lo/target,p=Math.pow(10,Math.floor(Math.log10(raw))),r=raw/p,step=(r<=1?1:r<=2?2:r<=5?5:10)*p;if(!Number.isFinite(step)||step<=0)return [lo,hi];const a=[];for(let v=Math.ceil(lo/step)*step;Number.isFinite(v)&&v<=hi&&a.length<30;){a.push(Math.abs(v)<step*1e-8?0:v);const next=v+step;if(next===v)break;v=next;}return a;}
@@ -241,6 +242,7 @@ function updateCountdowns(now){const byId=new Map(tasks.map(t=>[t.id,t]));docume
 // Min-max normalization uses only the tasks whose centers are in the viewport.
 let bubbleScaleKey='',bubbleRadii=new Map(),selectedTaskId=null,pinnedTaskId=null,linkFrame=0,hoverPointer=null,linkSegments=[];
 function normalizedRadii(visible,original){
+  if(bubbleDrag){const radii=new Map(bubbleDrag.radii);if(bubbleDrag.resize&&bubbleDrag.moved)radii.set(bubbleDrag.id,bubbleDrag.radius);return radii;}
   const value=t=>original?t.workload:t.importance;
   const key=JSON.stringify([original,visible.map(t=>[t.id,value(t)]).sort((a,b)=>a[0].localeCompare(b[0]))]);
   if(key===bubbleScaleKey)return bubbleRadii;
@@ -298,6 +300,7 @@ function installLinks(){
 }
 
 function draw(a,now){
+  a=a.map(bubblePreview);
   const {left:L,right:R,top:T,bottom:B}=chartBox,original=isOriginal(),sx=v=>L+axisFraction(v,viewport.x)*(R-L),sy=v=>B-axisFraction(v,viewport.y)*(B-T);
   
   let s=`<defs><clipPath id="plotClip"><rect x="${L}" y="${T}" width="${R-L}" height="${B-T}"/></clipPath></defs><rect x="${L}" y="${T}" width="${R-L}" height="${B-T}" fill="#f4f9f6"/>`;
@@ -312,7 +315,7 @@ function draw(a,now){
   const focusId=document.activeElement?.dataset?.edit;$('chart').innerHTML=s;if(focusId)[...$('chart').querySelectorAll('[data-edit]')].find(el=>el.dataset.edit===focusId)?.focus();
   $('chart').setAttribute('aria-label','重要性与迫切性地图，拖拽平移，滚轮缩放');
   $('legend').innerHTML='<span>困难度</span>'+difficultyColors.map((c,i)=>`<span><i style="background:${c}"></i>${i+1}</span>`).join('');
-  $('chartNote').textContent='横轴重要性，纵轴迫切性（独立数值）；圆圈大小表示任务量，颜色表示困难度。点击圆圈或标题查看详情。右键地图创建日程。拖拽移动，滚轮或双指缩放；“适配全部筛选任务”可查看范围外日程。';
+  $('chartNote').textContent='横轴重要性，纵轴迫切性（独立数值）；圆圈大小表示任务量，颜色表示困难度。点击圆圈或标题查看详情。电脑拖动圆圈内部调整位置，拖动边缘调整任务量（松开按可见任务重新归一化）；Esc 取消。右键地图创建日程。拖拽空白处移动，滚轮或双指缩放；“适配全部筛选任务”可查看范围外日程。';
   if(mobileMode)$('chartNote').textContent='长按地图创建日程；单指拖动，双指缩放。轻点圆圈或标题标签查看详情。标签拥挤时可放大地图；点击“适配全部”查找范围外日程。横轴重要性，纵轴迫切性。';
 }
 function chartPoint(e){const svg=$('chart'),ctm=svg.getScreenCTM();if(!ctm)return null;const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(ctm.inverse());return{x:p.x,y:p.y};}
@@ -321,13 +324,73 @@ function requestChartRefresh(){if(!gestureFrame)gestureFrame=requestAnimationFra
 function zoomViewport(factor,p){const b=chartBox;const fx=(p.x-b.left)/(b.right-b.left),fy=(b.bottom-p.y)/(b.bottom-b.top),next={};for(const [axis,f] of [['x',fx],['y',fy]]){const [lo,hi]=viewport[axis],anchor=lo+(hi-lo)*f;next[axis]=[anchor+(lo-anchor)*factor,anchor+(hi-anchor)*factor];}setViewport(next);requestChartRefresh();}
 function beginGesture(){const pts=[...activePointers.values()];if(!pts.length){dragState=null;return;}const p=pts[0],q=pts[1];dragState={x:q?(p.x+q.x)/2:p.x,y:q?(p.y+q.y)/2:p.y,distance:q?Math.hypot(q.x-p.x,q.y-p.y):0,viewport:{x:[...viewport.x],y:[...viewport.y]},moved:false};}
 
+
+let bubbleDrag=null;
+function bubblePreview(t){return bubbleDrag?.id===t.id&&bubbleDrag.moved?{...t,...bubbleDrag.preview}:t;}
+function desktopBubbleHit(e){
+ if(mobileMode||e.pointerType==='touch')return null;
+ const circle=e.target.closest?.('.bubble');if(!circle)return null;
+ const p=chartPoint(e);if(!p)return null;
+ const cx=Number(circle.getAttribute('cx')),cy=Number(circle.getAttribute('cy')),r=Number(circle.getAttribute('r'));
+ const ctm=$('chart').getScreenCTM(),scale=Math.hypot(ctm?.a||1,ctm?.b||0);
+ const edge=Math.min(r*.35,6/scale),dx=p.x-cx,dy=p.y-cy;
+ const resize=Math.hypot(dx,dy)>=r-edge;
+ const cursor=resize?['ew-resize','nwse-resize','ns-resize','nesw-resize'][((Math.round(Math.atan2(dy,dx)/(Math.PI/4))%4)+4)%4]:'grab';
+ return {circle,id:circle.dataset.edit,p,cx,cy,r,resize,cursor};
+}
+function hoverDesktopBubble(e){
+ if(bubbleDrag)return;
+ const hit=desktopBubbleHit(e);if(hit)hit.circle.style.cursor=hit.cursor;
+}
+function startBubbleDrag(e){
+ const h=desktopBubbleHit(e);if(!h||e.button!==0)return false;
+ const t=tasks.find(t=>t.id===h.id);if(!t)return false;
+ closeChartMenu();mapHoldCancel();
+ const originals={importance:t.importance,urgency:t.urgency,workload:t.workload};
+ bubbleDrag={...h,pointerId:e.pointerId,screenX:e.clientX,screenY:e.clientY,originals,preview:{...originals},moved:false,
+  offset:{x:h.p.x-h.cx,y:h.p.y-h.cy},startDistance:Math.hypot(h.p.x-h.cx,h.p.y-h.cy),
+  radii:new Map(normalizedRadii(viewportTasks(filtered(),Date.now()),true)),radius:h.r};
+ $('chart').setPointerCapture(e.pointerId);$('chart').style.cursor=h.cursor;return true;
+}
+function moveBubbleDrag(e){
+ const g=bubbleDrag;if(!g||e.pointerId!==g.pointerId)return;
+ if(!g.moved&&Math.hypot(e.clientX-g.screenX,e.clientY-g.screenY)<4)return;
+ const p=chartPoint(e);if(!p)return;
+ g.moved=true;suppressChartClickUntil=Date.now()+600;$('chart').classList.add('bubble-editing');
+ $('chart').style.cursor=g.resize?g.cursor:'grabbing';
+ if(g.resize){
+  const requested=Math.max(2,g.r+Math.hypot(p.x-g.cx,p.y-g.cy)-g.startDistance);
+  const workload=Math.max(.1,Math.min(100000,g.originals.workload*(requested/g.r)**2));
+  g.preview.workload=Number(workload.toPrecision(12));
+  g.radius=g.r*Math.sqrt(workload/g.originals.workload);
+ }else{
+  const center={x:Math.max(chartBox.left,Math.min(chartBox.right,p.x-g.offset.x)),y:Math.max(chartBox.top,Math.min(chartBox.bottom,p.y-g.offset.y))};
+  const pos=mapCoordinateAt(center);if(pos)Object.assign(g.preview,pos);
+ }
+ requestChartRefresh();
+}
+function finishBubbleDrag(commit=true){
+ const g=bubbleDrag;if(!g)return;
+ bubbleDrag=null;const svg=$('chart');svg.classList.remove('bubble-editing');svg.style.cursor='';
+ if(svg.hasPointerCapture(g.pointerId))svg.releasePointerCapture(g.pointerId);
+ suppressChartClickUntil=Date.now()+600;
+ if(commit&&g.moved){
+  const t=tasks.find(t=>t.id===g.id);
+  if(t&&['importance','urgency','workload'].every(k=>t[k]===g.originals[k])){
+   Object.assign(t,g.preview);save();if(g.resize)notify('任务量已调整为 '+t.workload+' 小时；圆圈按可见任务重新归一化显示。');
+  }else notify('日程已发生其他修改，本次拖动未保存。');
+ }
+ renderLinked(Date.now());
+ if(commit&&!g.moved)openMobileDetail(g.id);
+}
+
 function installChartInteraction(){
  const svg=$('chart');let clickTaskId=null,holdTimer=null,holdStart=null,holdOpened=false;
  function cancelHold(){clearTimeout(holdTimer);holdTimer=null;holdStart=null;}
  mapHoldCancel=cancelHold;
- svg.addEventListener('wheel',e=>{const p=chartPoint(e);if(!onPlot(p))return;e.preventDefault();cancelHold();closeChartMenu();zoomViewport(Math.exp(Math.max(-.5,Math.min(.5,e.deltaY*(e.deltaMode===1?.02:.002)))),p);},{passive:false});
+ svg.addEventListener('wheel',e=>{if(bubbleDrag){e.preventDefault();return;}const p=chartPoint(e);if(!onPlot(p))return;e.preventDefault();cancelHold();closeChartMenu();zoomViewport(Math.exp(Math.max(-.5,Math.min(.5,e.deltaY*(e.deltaMode===1?.02:.002)))),p);},{passive:false});
  svg.addEventListener('pointerdown',e=>{
-  if(e.button!==0)return;cancelHold();const p=chartPoint(e);if(!onPlot(p))return;
+  if(bubbleDrag)return;if(e.button!==0)return;if(!activePointers.size&&startBubbleDrag(e))return;cancelHold();const p=chartPoint(e);if(!onPlot(p))return;
   if(!activePointers.size)holdOpened=false;
   closeChartMenu();clickTaskId=activePointers.size?null:(e.target.closest('[data-edit]')?.dataset.edit||null);
   activePointers.set(e.pointerId,p);svg.setPointerCapture(e.pointerId);beginGesture();
@@ -341,6 +404,7 @@ function installChartInteraction(){
   }
  });
  svg.addEventListener('pointermove',e=>{
+  if(bubbleDrag){moveBubbleDrag(e);return;}hoverDesktopBubble(e);
   if(holdStart&&Math.hypot(e.clientX-holdStart.x,e.clientY-holdStart.y)>8)cancelHold();
   if(holdOpened||!activePointers.has(e.pointerId)||!dragState)return;
   const p=chartPoint(e);if(!p)return;activePointers.set(e.pointerId,p);
@@ -356,6 +420,7 @@ function installChartInteraction(){
   setViewport(next);requestChartRefresh();
  });
  function finish(e){
+  if(bubbleDrag){if(e.pointerId===bubbleDrag.pointerId)finishBubbleDrag(e.type==='pointerup');return;}
   cancelHold();const editId=e.type==='pointerup'&&!holdOpened&&$('chartMenu').hidden&&activePointers.size===1&&!dragState?.moved?clickTaskId:null;clickTaskId=null;
   activePointers.delete(e.pointerId);if(svg.hasPointerCapture(e.pointerId))svg.releasePointerCapture(e.pointerId);
   if(activePointers.size&&!holdOpened)beginGesture();else{dragState=null;svg.classList.remove('dragging');}
@@ -364,9 +429,10 @@ function installChartInteraction(){
   if(editId){suppressChartClickUntil=Date.now()+400;openMobileDetail(editId);}
  }
  svg.addEventListener('pointerup',finish);svg.addEventListener('pointercancel',finish);
- svg.addEventListener('lostpointercapture',e=>{if(activePointers.has(e.pointerId))finish(e);});
+ svg.addEventListener('lostpointercapture',e=>{if(activePointers.has(e.pointerId)||bubbleDrag?.pointerId===e.pointerId)finish(e);});
  svg.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){cancelHold();closeChartMenu();return;}
+  if(e.key==='Escape'){if(bubbleDrag){e.preventDefault();finishBubbleDrag(false);}cancelHold();closeChartMenu();return;}
+  if(bubbleDrag)return;
   if(e.target!==svg)return;
   if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();const p={x:(chartBox.left+chartBox.right)/2,y:(chartBox.top+chartBox.bottom)/2},r=svg.getBoundingClientRect();openChartCreateMenu(p,(r.left+r.right)/2,(r.top+r.bottom)/2);return;}
   const shifts={ArrowLeft:[-.15,0],ArrowRight:[.15,0],ArrowUp:[0,.15],ArrowDown:[0,-.15]};
@@ -378,10 +444,10 @@ function installChartInteraction(){
  $('resetChart').onclick=resetViewport;$('fitChart').onclick=fitAllTasks;
  $('applyRange').onclick=()=>{const x=[$('xMin').valueAsNumber,$('xMax').valueAsNumber],y=[$('yMin').valueAsNumber,$('yMax').valueAsNumber];if(![...x,...y].every(Number.isFinite)||x[0]>=x[1]||y[0]>=y[1]){notify('范围必须是有效数字，且最小值小于最大值');return;}setViewport({x,y});renderLinked(Date.now());};
  $('listScope').onchange=()=>renderLinked(Date.now());
- window.addEventListener('blur',()=>{cancelHold();closeChartMenu();activePointers.clear();dragState=null;});
+ window.addEventListener('blur',()=>{finishBubbleDrag(false);cancelHold();closeChartMenu();activePointers.clear();dragState=null;});
 }
 function localInput(date){const d=new Date(date);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);}
-function openEditor(id){const t=tasks.find(t=>t.id===id);resetEditorAI(t);$('taskForm').reset();$('editorTitle').textContent=t?'编辑日程':'新建日程';$('taskId').value=t?.id||'';$('taskTitle').value=t?.title||'';$('taskDetails').value=t?.details||'';$('taskCategory').value=t?.category||'工作';$('taskWorkload').value=t?.workload||1;$('taskDeadline').value=localInput(t?.deadline||Date.now()+DAY);$('taskImportance').value=t?.importance??0;$('taskUrgency').value=t?.urgency??0;$('importanceValue').value=$('taskImportance').value;$('taskDone').checked=t?.done||false;$('taskDifficulty').value=t?.difficulty||5;updateDifficulty();setDetailsMode(t?.detailsMode||'text');$('editor').showModal();$('taskTitle').focus();}
+function openEditor(id){if(bubbleDrag)finishBubbleDrag(false);const t=tasks.find(t=>t.id===id);resetEditorAI(t);$('taskForm').reset();$('editorTitle').textContent=t?'编辑日程':'新建日程';$('taskId').value=t?.id||'';$('taskTitle').value=t?.title||'';$('taskDetails').value=t?.details||'';$('taskCategory').value=t?.category||'工作';$('taskWorkload').value=t?.workload||1;$('taskDeadline').value=localInput(t?.deadline||Date.now()+DAY);$('taskImportance').value=t?.importance??0;$('taskUrgency').value=t?.urgency??0;$('importanceValue').value=$('taskImportance').value;$('taskDone').checked=t?.done||false;$('taskDifficulty').value=t?.difficulty||5;updateDifficulty();setDetailsMode(t?.detailsMode||'text');$('editor').showModal();$('taskTitle').focus();}
 $('taskForm').onsubmit=e=>{e.preventDefault();const title=$('taskTitle').value.trim(),category=$('taskCategory').value.trim();if(!title||!category){notify('题目和类别不能仅包含空格');return;}const date=new Date($('taskDeadline').value);if(!Number.isFinite(date.getTime())){notify('请填写有效的截止时间');return;}const t={id:$('taskId').value||uid(),title,details:$('taskDetails').value,category,importance:Number($('taskImportance').value),urgency:Number($('taskUrgency').value),workload:Number($('taskWorkload').value),deadline:date.toISOString(),done:$('taskDone').checked,difficulty:Number($('taskDifficulty').value),detailsMode};try{validate([t]);}catch(e){notify(e.message);return;}const i=tasks.findIndex(v=>v.id===t.id);if(i<0)tasks.push(t);else tasks[i]=t;save();$('editor').close();render();};
 $('taskImportance').oninput=()=>$('importanceValue').value=$('taskImportance').value;$('newBtn').onclick=()=>openEditor();$('closeEditor').onclick=$('cancelEditor').onclick=()=>$('editor').close();$('helpBtn').onclick=()=>$('help').showModal();$('closeHelp').onclick=()=>$('help').close();
 
@@ -414,7 +480,7 @@ function deleteTask(id){const t=tasks.find(t=>t.id===id);if(!t)return;if(!confir
 function act(e){const b=e.target.closest('[data-edit],[data-toggle],[data-delete],[data-focus],[data-select]');if(!b)return;closeChartMenu();if(b.dataset.select){selectTask(b.dataset.select);return;}if(b.dataset.focus){focusTask(b.dataset.focus);selectedTaskId=b.dataset.focus;highlightSelection();requestLinks();return;}if(b.dataset.edit){openEditor(b.dataset.edit);return;}if(b.dataset.toggle){const t=tasks.find(t=>t.id===b.dataset.toggle);if(!t)return;t.done=!t.done;save();render();}if(b.dataset.delete)deleteTask(b.dataset.delete);}
 $('rows').onclick=act;$('chart').onclick=e=>{if(Date.now()<suppressChartClickUntil)return;const b=e.target.closest('[data-edit]');if(b){openMobileDetail(b.dataset.edit);}else{selectedTaskId=null;highlightSelection();requestLinks();}};
 $('chart').ondblclick=e=>{const b=e.target.closest('[data-edit]');if(b)openEditor(b.dataset.edit);};
-$('chart').oncontextmenu=e=>{e.preventDefault();if(activePointers.size>1||dragState?.moved)return;const p=chartPoint(e);if(!onPlot(p))return;mapHoldCancel();if(!$('chartMenu').hidden)return;openChartCreateMenu(p,e.clientX,e.clientY);};
+$('chart').oncontextmenu=e=>{e.preventDefault();if(bubbleDrag)return;if(activePointers.size>1||dragState?.moved)return;const p=chartPoint(e);if(!onPlot(p))return;mapHoldCancel();if(!$('chartMenu').hidden)return;openChartCreateMenu(p,e.clientX,e.clientY);};
 $('chart').onkeydown=e=>{const bubble=e.target.closest('[data-edit]');if(!bubble)return;if(e.key==='Delete'){e.preventDefault();deleteTask(bubble.dataset.edit);}else if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();const r=bubble.getBoundingClientRect(),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;openChartCreateMenu(chartPoint({clientX:x,clientY:y}),x,y);}else if(e.key==='Enter'||e.key===' '){e.preventDefault();if(e.shiftKey)openEditor(bubble.dataset.edit);else selectTask(bubble.dataset.edit,true);}};
 $('chartMenuCreate').onclick=createTaskAtMenu;
 $('chartMenu').onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();closeChartMenu(true);}else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();$('chartMenuCreate').focus();}else if(e.key==='Tab')closeChartMenu();};
@@ -603,6 +669,7 @@ initEditorAI();
 const mobileQuery=window.matchMedia('(max-width: 767px), (pointer: coarse) and (max-height: 600px) and (max-width: 1100px)');
 let mobileMode=mobileQuery.matches,mobileDetailId=null,mobileResizeFrame=0;
 function updateMobileLayout(){
+ finishBubbleDrag(false);
  mapHoldCancel();closeChartMenu();
  mobileMode=mobileQuery.matches;document.body.classList.toggle('mobile-mode',mobileMode);
  const w=mobileMode?Math.max(280,Math.round($('chart').getBoundingClientRect().width||window.innerWidth-24)):880;
