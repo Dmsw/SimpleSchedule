@@ -322,18 +322,35 @@ let bubbleDrag=null;
 function bubblePreview(t){return bubbleDrag?.id===t.id&&bubbleDrag.moved?{...t,...bubbleDrag.preview}:t;}
 function desktopBubbleHit(e){
  if(mobileMode||e.pointerType==='touch')return null;
- const circle=e.target.closest?.('.bubble');if(!circle)return null;
- const p=chartPoint(e);if(!p)return null;
- const cx=Number(circle.getAttribute('cx')),cy=Number(circle.getAttribute('cy')),r=Number(circle.getAttribute('r'));
- const ctm=$('chart').getScreenCTM(),scale=Math.hypot(ctm?.a||1,ctm?.b||0);
- const edge=Math.min(r*.35,6/scale),dx=p.x-cx,dy=p.y-cy;
- const resize=Math.hypot(dx,dy)>=r-edge;
- const cursor=resize?['ew-resize','nwse-resize','ns-resize','nesw-resize'][((Math.round(Math.atan2(dy,dx)/(Math.PI/4))%4)+4)%4]:'grab';
- return {circle,id:circle.dataset.edit,p,cx,cy,r,resize,cursor};
+ const svg=$('chart'),p=chartPoint(e);if(!p)return null;
+ const ctm=svg.getScreenCTM(),scale=Math.max(Number.EPSILON,Math.hypot(ctm?.a||1,ctm?.b||0)),outerEdge=8/scale;
+ const direct=e.target.closest?.('.bubble');
+ const inspect=(circle,outsideOnly=false)=>{
+  const cx=Number(circle.getAttribute('cx')),cy=Number(circle.getAttribute('cy')),r=Number(circle.getAttribute('r'));
+  if(![cx,cy,r].every(Number.isFinite)||r<=0)return null;
+  const dx=p.x-cx,dy=p.y-cy,distance=Math.hypot(dx,dy),innerEdge=Math.min(r*.35,6/scale);
+  if(outsideOnly){
+   const gap=distance-r;if(gap<0||gap>outerEdge)return null;
+   const cursor=['ew-resize','nwse-resize','ns-resize','nesw-resize'][((Math.round(Math.atan2(dy,dx)/(Math.PI/4))%4)+4)%4];
+   return {circle,id:circle.dataset.edit,p,cx,cy,r,resize:true,cursor,gap};
+  }
+  const resize=distance>=r-innerEdge;
+  const cursor=resize?['ew-resize','nwse-resize','ns-resize','nesw-resize'][((Math.round(Math.atan2(dy,dx)/(Math.PI/4))%4)+4)%4]:'grab';
+  return {circle,id:circle.dataset.edit,p,cx,cy,r,resize,cursor,gap:Math.abs(distance-r)};
+ };
+ if(direct)return inspect(direct);
+ let best=null;
+ for(const circle of svg.querySelectorAll('.bubble')){
+  const hit=inspect(circle,true);
+  if(hit&&(!best||hit.gap<best.gap))best=hit;
+ }
+ return best;
 }
 function hoverDesktopBubble(e){
  if(bubbleDrag)return;
- const hit=desktopBubbleHit(e);if(hit)hit.circle.style.cursor=hit.cursor;
+ const hit=desktopBubbleHit(e),svg=$('chart');
+ svg.style.cursor=hit?hit.cursor:'';
+ if(hit)hit.circle.style.cursor=hit.cursor;
 }
 function startBubbleDrag(e){
  const h=desktopBubbleHit(e);if(!h||e.button!==0)return false;
