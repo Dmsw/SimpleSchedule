@@ -14,7 +14,7 @@ main{max-width:1760px}.linked-layout{display:grid;grid-template-columns:minmax(0
 .selected-bubble{stroke:black!important;stroke-width:3!important;fill-opacity:1!important}.selection-box{fill:#286c5918;stroke:#286c59;stroke-width:1.5;stroke-dasharray:6 4;pointer-events:none}
 .taskcard.selected-card{box-shadow:inset 4px 0 0 #111;background:#f0f4f2}.taskcard{cursor:pointer}
 
-.mobile-only{display:none}.mobile-task-tag{cursor:pointer}.mobile-task-tag:focus rect{stroke:#111;stroke-width:3}.edge-task-tag{opacity:.96}.inline-tag-editor{position:fixed;z-index:40;margin:0;padding:0 9px;border:2px solid var(--accent);border-radius:6px;background:white;color:#193329;font:13px/1.2 "Segoe UI","Microsoft YaHei",sans-serif;box-shadow:0 2px 10px #0002;outline:none}
+.mobile-only{display:none}.mobile-task-tag{cursor:pointer}.mobile-task-tag:focus rect{stroke:#111;stroke-width:3}.edge-task-tag{opacity:.52}.inline-tag-editor{position:fixed;z-index:40;margin:0;padding:0 9px;border:2px solid var(--accent);border-radius:6px;background:white;color:#193329;font:13px/1.2 "Segoe UI","Microsoft YaHei",sans-serif;box-shadow:0 2px 10px #0002;outline:none}
 body.mobile-mode .mobile-only{display:inline-flex}
 body.mobile-mode #listView,body.mobile-mode #taskLinks,body.mobile-mode .top h2,body.mobile-mode .top .muted,body.mobile-mode .brand .sub,body.mobile-mode #sortBy,body.mobile-mode #direction{display:none!important}
 body.mobile-mode header{padding:12px;flex-wrap:wrap;gap:10px}
@@ -338,10 +338,12 @@ function draw(a,outside,now){
   for(const v of dateTicks(...viewport.y,6)){const p=sy(v);s+=`<line x1="${L}" x2="${R}" y1="${p}" y2="${p}" stroke="#dce4e9"/><text x="${L-12}" y="${p+4}" text-anchor="end" fill="#687587" font-size="12">${dayLabel(v)}</text>`;}
   if(viewport.y[0]<=today&&viewport.y[1]>=today)s+=`<line x1="${L}" x2="${R}" y1="${sy(today)}" y2="${sy(today)}" stroke="#81968c" stroke-dasharray="5 4"/><text x="${R-4}" y="${sy(today)-6}" text-anchor="end" fill="#687587" font-size="11">今天</text>`;
   if(viewport.x[0]<=0&&viewport.x[1]>=0)s+=`<line x1="${sx(0)}" x2="${sx(0)}" y1="${T}" y2="${B}" stroke="#81968c" stroke-dasharray="5 4"/>`;
-  s+=`<text x="${L}" y="25" fill="#687587" font-size="14">截止日期 · 越早越靠上</text><text x="${(L+R)/2}" y="${chartBox.height-17}" text-anchor="middle" fill="#687587" font-size="14">重要性 →</text><g clip-path="url(#plotClip)">`;
+  s+=`<text x="${L}" y="25" fill="#687587" font-size="14">截止日期 · 越早越靠上</text><text x="${(L+R)/2}" y="${chartBox.height-17}" text-anchor="middle" fill="#687587" font-size="14">重要性 →</text>`;
+  s+=edgeTags(outside,now,sx,sy);
+  s+=`<g clip-path="url(#plotClip)">`;
   const size=t=>original?t.workload:t.importance,radii=taskRadii(a,original);
   for(const t of [...a].sort((a,b)=>size(b)-size(a))){const [x,y]=coordinates(t,now),r=radii.get(t.id);s+=`<circle class="bubble" tabindex="0" role="button" aria-label="${esc(t.title)}，重要性${t.importance}，截止${dayLabel(y)}，困难度${t.difficulty}，任务量${t.workload}小时" data-edit="${esc(t.id)}" cx="${sx(x)}" cy="${sy(y)}" r="${r}" fill="${difficultyColor(t.difficulty)}" fill-opacity="${t.done ? .25 : .72}" stroke="${difficultyColor(t.difficulty)}" stroke-width="1.5"><title>${esc(t.title)}\n${t.workload} 小时 · 重要性 ${t.importance} · 截止 ${dayLabel(y)} · 困难度 ${t.difficulty}\n${t.done?'已完成':countdown(t.deadline,now)}</title></circle>`;}
-  s+='</g>';s+=mobileTags(a,now,sx,sy,radii);s+=edgeTags(outside,now,sx,sy);if(!a.length)s+=`<text x="${(L+R)/2}" y="${(T+B)/2}" text-anchor="middle" fill="#87929d" font-size="16">此范围内暂无任务 · 可滚动或缩放探索</text>`;
+  s+='</g>';s+=mobileTags(a,now,sx,sy,radii);if(!a.length)s+=`<text x="${(L+R)/2}" y="${(T+B)/2}" text-anchor="middle" fill="#87929d" font-size="16">此范围内暂无任务 · 可滚动或缩放探索</text>`;
   const focusId=document.activeElement?.dataset?.edit;$('chart').innerHTML=s;if(focusId)[...$('chart').querySelectorAll('[data-edit]')].find(el=>el.dataset.edit===focusId)?.focus();
   $('chart').setAttribute('aria-label','重要性与截止日期地图。越早截止越靠上；鼠标拖动空白区域框选，滚轮平移，Ctrl 加滚轮缩放');
   $('legend').innerHTML='<span>困难度</span>'+difficultyColors.map((c,i)=>`<span><i style="background:${c}"></i>${i+1}</span>`).join('');
