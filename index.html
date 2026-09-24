@@ -53,19 +53,19 @@ body.mobile-mode .twocol{grid-template-columns:1fr}
 <svg id="taskLinks" aria-hidden="true"></svg>
 <div id="storageError" hidden role="alert"></div><main><div class="top"><div><div class="small" id="today"></div><h2>把精力放在重要的事上</h2><div class="muted">用重要性、截止时间、任务量与困难度，安排下一步。</div></div><button class="primary" id="newBtn">＋ 新建日程</button></div>
 <details id="scheduleStats"><summary>日程统计</summary><div class="stats"><div class="stat"><span>待完成</span><strong id="pending">0</strong></div><div class="stat"><span>24 小时内截止</span><strong id="dueSoon">0</strong></div><div class="stat"><span>已逾期</span><strong id="overdue" class="late">0</strong></div><div class="stat"><span>待办任务量 · 小时</span><strong id="hours">0</strong></div></div></details>
-<div class="filters" id="mobileFilterPanel"><input id="search" placeholder="搜索题目、细节或类别…" aria-label="搜索日程"><select id="categoryFilter" aria-label="筛选类别"><option value="">全部类别</option></select><select id="statusFilter" aria-label="筛选状态"><option value="pending">待完成</option><option value="all">全部状态</option><option value="done">已完成</option></select><select id="sortBy" aria-label="排序属性"><option value="deadline">迫切性 · 截止时间</option><option value="importance">重要性</option><option value="workload">任务量</option><option value="difficulty">困难度</option></select><button id="direction" title="切换排序方向">最迫切优先 ↑</button></div>
+<div class="filters" id="mobileFilterPanel"><input id="search" placeholder="搜索题目、细节或类别…" aria-label="搜索日程"><select id="categoryFilter" aria-label="筛选类别"><option value="">全部类别</option></select><select id="statusFilter" aria-label="筛选状态"><option value="pending">待完成</option><option value="all">全部状态</option><option value="done">已完成</option></select><select id="sortBy" aria-label="排序属性"><option value="deadline">截止时间</option><option value="urgency">迫切性</option><option value="importance">重要性</option><option value="workload">任务量</option><option value="difficulty">困难度</option></select><button id="direction" title="切换排序方向">最迫切优先 ↑</button></div>
 <div class="linked-layout">
 <section class="panel chart-panel" id="chartView"><div class="panelhead"><b>优先级地图</b><span class="small" id="chartCount"></span></div>
-<div class="chart-controls"><button id="zoomIn" aria-label="放大图表">＋</button><button id="zoomOut" aria-label="缩小图表">−</button><button id="resetChart">重置 48h / 47h</button><button id="fitChart">适配全部筛选任务</button></div>
-<details class="range-settings"><summary>设置坐标范围 · 负数表示剩余小时，正数表示逾期小时</summary><div class="range-grid"><label><span id="xRangeLabel">横轴</span><span class="range-pair"><input id="xMin" type="number" step="any" aria-label="横轴最小值"><span>至</span><input id="xMax" type="number" step="any" aria-label="横轴最大值"></span></label><label><span id="yRangeLabel">纵轴</span><span class="range-pair"><input id="yMin" type="number" step="any" aria-label="纵轴最小值"><span>至</span><input id="yMax" type="number" step="any" aria-label="纵轴最大值"></span></label></div><button id="applyRange">应用范围</button></details>
+<div class="chart-controls"><button id="zoomIn" aria-label="放大图表">＋</button><button id="zoomOut" aria-label="缩小图表">−</button><button id="resetChart">重置坐标</button><button id="fitChart">适配全部筛选任务</button></div>
+<details class="range-settings"><summary>设置坐标范围 · 重要性与迫切性</summary><div class="range-grid"><label><span id="xRangeLabel">横轴</span><span class="range-pair"><input id="xMin" type="number" step="any" aria-label="横轴最小值"><span>至</span><input id="xMax" type="number" step="any" aria-label="横轴最大值"></span></label><label><span id="yRangeLabel">纵轴</span><span class="range-pair"><input id="yMin" type="number" step="any" aria-label="纵轴最小值"><span>至</span><input id="yMax" type="number" step="any" aria-label="纵轴最大值"></span></label></div><button id="applyRange">应用范围</button></details>
 <div class="chartwrap"><svg id="chart" viewBox="0 0 880 510" tabindex="0" role="group" aria-label="联动任务图表"></svg><div id="legend" class="legend"></div></div><div id="chartNote" class="note"></div></section>
 <section class="panel list-panel" id="listView" hidden><div class="panelhead"><b>日程清单</b><span class="small" id="resultCount"></span></div><div class="list-tools"><label for="listScope">显示范围</label><select id="listScope"><option value="visible">仅图表范围内</option><option value="outside">仅范围外</option><option value="all">全部任务</option></select><span id="hiddenCount" class="small"></span></div><div class="small list-order">遵循顶部排序设置，默认最早截止优先。类别、搜索及状态筛选对两侧同时生效。</div><div id="rows" class="task-list"></div><div id="empty" class="empty" hidden></div></section></div>
 <footer><span id="saveStatus" role="status">本地自动保存 · 无需联网</span><span>建议定期导出备份，换浏览器或移动文件前先备份。</span><span>Powered by: <a href="https://github.com/Dmsw/SimpleSchedule" target="_blank" rel="noopener noreferrer">Dmsw/SimpleSchedule.git</a></span></footer></main>
-<dialog id="editor"><form id="taskForm"><div class="dialoghead"><h2 id="editorTitle">新建日程</h2><button type="button" id="closeEditor" aria-label="关闭">✕</button></div><div class="formbody"><input type="hidden" id="taskId"><details id="editorAIEntry" class="field"><summary>✦ AI解析</summary><textarea id="editorAIText" maxlength="10000" placeholder="粘贴一段任务描述，AI 自动填入能确定的信息。"></textarea><div class="actions"><button type="button" id="editorAIParse">解析并填入</button><button type="button" id="editorAISettings">API 设置</button></div></details><div class="small" id="editorAIStatus" role="status"></div><div class="actions"><button type="button" id="editorAIUndo" hidden>撤销 AI 填入</button><button type="button" id="editorAICancel" hidden>停止</button></div><div class="field"><label for="taskTitle">题目 *</label><input id="taskTitle" maxlength="160" required placeholder="例如：完成论文实验分析"></div><div class="field"><div class="details-tools"><label for="taskDetails">细节</label><div class="tabs"><button type="button" id="textMode" class="active" aria-pressed="true">纯文本编辑</button><button type="button" id="markdownMode" aria-pressed="false">Markdown 预览</button></div></div><textarea id="taskDetails" maxlength="10000" placeholder="可以直接输入纯文本，也支持 Markdown：&#10;## 目标&#10;- [ ] 完成实验&#10;- **重点**：整理结果"></textarea><div id="markdownPreview" class="md" hidden></div><div class="md-tip">支持标题、粗体、列表、任务清单、引用、代码块、表格和链接。切换显示不改变原文。</div></div><div class="twocol"><div class="field"><label for="taskCategory">类别 *</label><input id="taskCategory" list="categories" maxlength="40" required placeholder="科研 / 工作 / 生活"><datalist id="categories"><option value="科研"><option value="工作"><option value="生活"><option value="学习"></datalist></div><div class="field"><label for="taskWorkload">任务量 · 预计工时 *</label><input id="taskWorkload" type="number" min="0.1" max="100000" step="0.1" value="1" required></div></div><div class="field"><label for="taskDeadline">截止时间（本地时区）*</label><input id="taskDeadline" type="datetime-local" required></div><div class="field"><label for="taskImportance">重要性 · 1 最低 / 10 最高</label><div class="rangebox"><input id="taskImportance" type="range" min="1" max="10" value="5"><output id="importanceValue" for="taskImportance">5</output></div></div><div class="field"><label for="taskDifficulty">困难度 · 1 最容易 / 10 最困难</label><div class="rangebox"><input id="taskDifficulty" type="range" min="1" max="10" value="5"><output id="difficultyValue" for="taskDifficulty">5</output></div></div><label><input id="taskDone" type="checkbox"> 已完成</label></div><div class="formfoot"><button type="button" id="cancelEditor">取消</button><button class="primary" type="submit">保存日程</button></div><div id="editorAIPopup" role="group" aria-label="AI补全" hidden><button type="button" id="editorAIComplete">✦ AI补全</button></div></form></dialog>
+<dialog id="editor"><form id="taskForm"><div class="dialoghead"><h2 id="editorTitle">新建日程</h2><button type="button" id="closeEditor" aria-label="关闭">✕</button></div><div class="formbody"><input type="hidden" id="taskId"><details id="editorAIEntry" class="field"><summary>✦ AI解析</summary><textarea id="editorAIText" maxlength="10000" placeholder="粘贴一段任务描述，AI 自动填入能确定的信息。"></textarea><div class="actions"><button type="button" id="editorAIParse">解析并填入</button><button type="button" id="editorAISettings">API 设置</button></div></details><div class="small" id="editorAIStatus" role="status"></div><div class="actions"><button type="button" id="editorAIUndo" hidden>撤销 AI 填入</button><button type="button" id="editorAICancel" hidden>停止</button></div><div class="field"><label for="taskTitle">题目 *</label><input id="taskTitle" maxlength="160" required placeholder="例如：完成论文实验分析"></div><div class="field"><div class="details-tools"><label for="taskDetails">细节</label><div class="tabs"><button type="button" id="textMode" class="active" aria-pressed="true">纯文本编辑</button><button type="button" id="markdownMode" aria-pressed="false">Markdown 预览</button></div></div><textarea id="taskDetails" maxlength="10000" placeholder="可以直接输入纯文本，也支持 Markdown：&#10;## 目标&#10;- [ ] 完成实验&#10;- **重点**：整理结果"></textarea><div id="markdownPreview" class="md" hidden></div><div class="md-tip">支持标题、粗体、列表、任务清单、引用、代码块、表格和链接。切换显示不改变原文。</div></div><div class="twocol"><div class="field"><label for="taskCategory">类别 *</label><input id="taskCategory" list="categories" maxlength="40" required placeholder="科研 / 工作 / 生活"><datalist id="categories"><option value="科研"><option value="工作"><option value="生活"><option value="学习"></datalist></div><div class="field"><label for="taskWorkload">任务量 · 预计工时 *</label><input id="taskWorkload" type="number" min="0.1" max="100000" step="0.1" value="1" required></div></div><div class="field"><label for="taskDeadline">截止时间（本地时区）*</label><input id="taskDeadline" type="datetime-local" required></div><div class="field"><label for="taskImportance">重要性 · 任意正负小数</label><div class="rangebox"><input id="taskImportance" type="number" step="any" value="0" required><output id="importanceValue" for="taskImportance" hidden>0</output></div></div><div class="field"><label for="taskUrgency">迫切性 · 任意正负小数</label><input id="taskUrgency" type="number" step="any" value="0" required><div class="small">独立于截止时间，数值越大越靠上。</div></div><div class="field"><label for="taskDifficulty">困难度 · 1 最容易 / 10 最困难</label><div class="rangebox"><input id="taskDifficulty" type="range" min="1" max="10" value="5"><output id="difficultyValue" for="taskDifficulty">5</output></div></div><label><input id="taskDone" type="checkbox"> 已完成</label></div><div class="formfoot"><button type="button" id="cancelEditor">取消</button><button class="primary" type="submit">保存日程</button></div><div id="editorAIPopup" role="group" aria-label="AI补全" hidden><button type="button" id="editorAIComplete">✦ AI补全</button></div></form></dialog>
 <dialog id="mobileDetail" aria-labelledby="mobileDetailTitle"><div class="dialoghead"><h2 id="mobileDetailTitle"></h2><button id="mobileDetailClose" aria-label="关闭详情">✕</button></div><div class="formbody"><p id="mobileDetailMeta"></p><p id="mobileDetailDate" class="small"></p><p id="mobileDetailCountdown"></p><div id="mobileDetailBody" class="md"></div></div><div class="formfoot"><button id="mobileEdit">编辑</button><button id="mobileComplete" class="primary">标记完成</button><button id="mobileDelete" class="danger">删除</button></div></dialog>
-<dialog id="help"><div class="dialoghead"><h2>使用说明</h2><button id="closeHelp" aria-label="关闭说明">✕</button></div><div class="helpbody"><p><b>开始使用：</b>将此 HTML 文件保存在固定文件夹，使用 Windows 上的 Edge 或 Chrome 打开。无需安装 Python，无需网络。</p><p><b>四个属性：</b>重要性与困难度均为 1–10 级；迫切性由截止时间自动计算，每秒刷新倒计时；任务量以预计小时数记录，支持小数。</p><p><b>Markdown：</b>在纯文本编辑框输入内容，点击“Markdown 预览”查看排版，随时切回编辑。保存时保留显示模式，清单中展开细节可阅读全文。支持常用 Markdown（标题、列表、任务清单、引用、代码、表格、链接）。原始 HTML 仅作为文字显示；远程图片只显示说明与链接。</p><p><b>地图：</b>仅提供重要性 × 迫切性视图。圆圈大小按当前可见任务量归一化，颜色表示困难度。点击圆圈或标题标签查看详情，可编辑、完成或删除日程。拖拽平移，滚轮或双指缩放，“适配全部筛选任务”查看范围外任务。列表暂时隐藏；顶部“日程统计”默认折叠，点击展开查看。</p><p><b>本地保存：</b>每次修改自动保存到当前浏览器的 localStorage。请固定使用同一浏览器、同一文件位置，并避免无痕模式。清除浏览器数据、移动或重命名文件后，数据可能无法继续读取。</p><p><b>备份迁移：</b>点击“导出备份”下载 JSON 文件。导入采用合并方式；相同 ID 的日程以备份内容更新，其余保留。删除前会确认，删除后短时间内可撤销。支持导入旧版备份，旧日程困难度默认为 5，细节默认为纯文本。</p><p>数据不发送到服务器。本软件没有后台通知功能，关闭页面后不会弹出提醒。</p></div></dialog>
+<dialog id="help"><div class="dialoghead"><h2>使用说明</h2><button id="closeHelp" aria-label="关闭说明">✕</button></div><div class="helpbody"><p><b>开始使用：</b>将此 HTML 文件保存在固定文件夹，使用 Windows 上的 Edge 或 Chrome 打开。无需安装 Python，无需网络。</p><p><b>四个属性：</b>重要性与迫切性均为独立的正负小数，不与截止时间绑定；困难度为 1–10 级；截止倒计时独立刷新；任务量以预计小时数记录，支持小数。</p><p><b>Markdown：</b>在纯文本编辑框输入内容，点击“Markdown 预览”查看排版，随时切回编辑。保存时保留显示模式，点击地图上的标题标签可阅读全文。支持常用 Markdown（标题、列表、任务清单、引用、代码、表格、链接）。原始 HTML 仅作为文字显示；远程图片只显示说明与链接。</p><p><b>地图：</b>仅提供重要性 × 迫切性视图。圆圈大小按当前可见任务量归一化，颜色表示困难度。点击圆圈或标题标签查看详情，可编辑、完成或删除日程。右键地图（手机长按）打开只有“创建日程”的菜单，自动填入所在位置的重要性与迫切性；保存前可以修改。拖拽平移，滚轮或双指缩放，“适配全部筛选任务”查看范围外任务。列表暂时隐藏；顶部“日程统计”默认折叠，点击展开查看。</p><p><b>本地保存：</b>每次修改自动保存到当前浏览器的 localStorage。请固定使用同一浏览器、同一文件位置，并避免无痕模式。清除浏览器数据、移动或重命名文件后，数据可能无法继续读取。</p><p><b>备份迁移：</b>点击“导出备份”下载 JSON 文件。导入采用合并方式；相同 ID 的日程以备份内容更新，其余保留。删除前会确认，删除后短时间内可撤销。支持导入旧版备份，旧日程迫切性初始化为 0，重要性和截止时间保留；版本 1 日程困难度默认为 5，细节默认为纯文本。</p><p>数据不发送到服务器。本软件没有后台通知功能，关闭页面后不会弹出提醒。</p></div></dialog>
 <dialog id="aiDialog"><div class="dialoghead"><h2>✦ AI 助手</h2><button id="closeAi" aria-label="关闭">✕</button></div><div class="formbody"><div class="field"><label>API 设置</label><div class="twocol"><input id="aiBase" placeholder="https://api.minimax.io/v1"><input id="aiModel" placeholder="MiniMax-M2.5"></div><input id="aiKey" type="password" placeholder="API Key（仅保存在本机）"><div class="small">MiniMax 官方 OpenAI 兼容地址：海外通常为 https://api.minimax.io/v1，国内区域请使用控制台提供的地址。浏览器直连可能受 CORS 或网络策略影响。</div></div><div class="actions"><button id="saveAi">保存设置</button><button id="reportAi" class="primary">生成今日汇报</button><button id="planAi">给出今日完成建议</button></div><div class="field"><label for="aiPrompt">向助手提问</label><textarea id="aiPrompt" placeholder="例如：帮我把当前任务拆成三个可执行步骤"></textarea><button id="askAi" class="primary">发送问题</button></div><div id="aiStatus" class="small"></div><div id="aiOutput" class="md" hidden></div></div></dialog>
-<div id="chartMenu" hidden role="menu" aria-label="日程操作"><div id="chartMenuTitle"></div><button id="chartMenuEdit" role="menuitem">编辑日程</button><button id="chartMenuDelete" role="menuitem" class="danger">删除日程</button><div class="menuhint">删除后 12 秒内可撤销 · Esc 关闭</div></div>
+<div id="chartMenu" hidden role="menu" aria-label="地图操作"><div id="chartMenuTitle"></div><button id="chartMenuCreate" role="menuitem">创建日程</button></div>
 <input id="importFile" type="file" accept=".json,application/json" hidden><div id="toast" role="status" hidden></div>
 <!-- Bundled Markdown parser: Marked 17.0.5, MIT license
 # License information
@@ -197,10 +197,10 @@ const difficultyColors=['#27845b','#40915a','#679c54','#91a64b','#b3ad43','#cea3
 const difficultyColor=n=>difficultyColors[n-1]||difficultyColors[4];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2);
-function validate(a,legacy=false){if(!Array.isArray(a)||a.length>20000)throw Error('日程列表无效或超过 20000 条');const ids=new Set();return a.map(t=>{if(legacy&&t&&typeof t==='object')t={...t,difficulty:5,detailsMode:'text'};if(!t||typeof t.id!=='string'||!t.id||t.id.length>150||ids.has(t.id)||typeof t.title!=='string'||!t.title.trim()||t.title.length>160||typeof t.details!=='string'||t.details.length>10000||typeof t.category!=='string'||!t.category.trim()||t.category.length>40||!Number.isInteger(t.importance)||t.importance<1||t.importance>10||typeof t.workload!=='number'||!Number.isFinite(t.workload)||t.workload<.1||t.workload>100000||typeof t.deadline!=='string'||!Number.isFinite(Date.parse(t.deadline))||typeof t.done!=='boolean'||!Number.isInteger(t.difficulty)||t.difficulty<1||t.difficulty>10||!['text','markdown'].includes(t.detailsMode))throw Error('存在格式不正确的日程，未导入任何数据');ids.add(t.id);return{id:t.id,title:t.title.trim(),details:t.details,category:t.category.trim(),importance:t.importance,workload:t.workload,deadline:new Date(t.deadline).toISOString(),done:t.done,difficulty:t.difficulty,detailsMode:t.detailsMode};});}
-function unpack(d){if(!d||d.app!=='FocusSchedule'||![1,2].includes(d.version))throw Error('不是受支持的日程备份（需要版本 1 或 2）');return validate(d.tasks,d.version===1);}
+function validate(a,legacy=false){if(!Array.isArray(a)||a.length>20000)throw Error('日程列表无效或超过 20000 条');const ids=new Set();return a.map(t=>{if(legacy&&t&&typeof t==='object')t={...t,difficulty:5,detailsMode:'text'};if(!t||typeof t.id!=='string'||!t.id||t.id.length>150||ids.has(t.id)||typeof t.title!=='string'||!t.title.trim()||t.title.length>160||typeof t.details!=='string'||t.details.length>10000||typeof t.category!=='string'||!t.category.trim()||t.category.length>40||typeof t.importance!=='number'||!Number.isFinite(t.importance)||typeof t.urgency!=='number'||!Number.isFinite(t.urgency)||typeof t.workload!=='number'||!Number.isFinite(t.workload)||t.workload<.1||t.workload>100000||typeof t.deadline!=='string'||!Number.isFinite(Date.parse(t.deadline))||typeof t.done!=='boolean'||!Number.isInteger(t.difficulty)||t.difficulty<1||t.difficulty>10||!['text','markdown'].includes(t.detailsMode))throw Error('存在格式不正确的日程，未导入任何数据');ids.add(t.id);return{id:t.id,title:t.title.trim(),details:t.details,category:t.category.trim(),importance:t.importance,urgency:t.urgency,workload:t.workload,deadline:new Date(t.deadline).toISOString(),done:t.done,difficulty:t.difficulty,detailsMode:t.detailsMode};});}
+function unpack(d){if(!d||d.app!=='FocusSchedule'||![1,2,4].includes(d.version)||!Array.isArray(d.tasks))throw Error('不是受支持的日程备份（版本 1、2 或 4）');const incoming=d.version<4?d.tasks.map(t=>t&&typeof t==='object'?{...t,urgency:0}:t):d.tasks;return validate(incoming,d.version===1);}
 function load(){try{const raw=localStorage.getItem(KEY);if(raw)tasks=unpack(JSON.parse(raw));}catch(e){storageBlocked=true;$('storageError').hidden=false;$('storageError').textContent='本地数据无法读取：'+e.message+'。为保护原数据，本次不覆盖存储；可导出当前日程后，在正常浏览器环境重新打开。';$('saveStatus').textContent='本地存储不可用，请导出备份';}}
-function save(){if(storageBlocked){notify('本次修改仅在内存中，请导出备份');return;}try{localStorage.setItem(KEY,JSON.stringify({app:'FocusSchedule',version:2,tasks}));$('saveStatus').textContent='已自动保存到本机 · '+new Date().toLocaleTimeString('zh-CN');}catch(e){$('storageError').hidden=false;$('storageError').textContent='自动保存失败（可能空间不足或浏览器限制）。请立即导出备份。';$('saveStatus').textContent='保存失败 · 请导出备份';notify('自动保存失败，请导出备份');}}
+function save(){if(storageBlocked){notify('本次修改仅在内存中，请导出备份');return;}try{localStorage.setItem(KEY,JSON.stringify({app:'FocusSchedule',version:4,tasks}));$('saveStatus').textContent='已自动保存到本机 · '+new Date().toLocaleTimeString('zh-CN');}catch(e){$('storageError').hidden=false;$('storageError').textContent='自动保存失败（可能空间不足或浏览器限制）。请立即导出备份。';$('saveStatus').textContent='保存失败 · 请导出备份';notify('自动保存失败，请导出备份');}}
 function notify(msg,undo){clearTimeout(toastTimer);$('toast').replaceChildren(document.createTextNode(msg));if(undo){const b=document.createElement('button');b.textContent='撤销';b.style.marginLeft='15px';b.onclick=()=>{undo();$('toast').hidden=true;};$('toast').append(b);}$('toast').hidden=false;toastTimer=setTimeout(()=>$('toast').hidden=true,undo?12000:4500);}
 function countdown(deadline,now=Date.now()){const ms=Date.parse(deadline)-now,sec=Math.floor(Math.abs(ms)/1000),d=Math.floor(sec/86400),h=Math.floor(sec%86400/3600),m=Math.floor(sec%3600/60),s=sec%60;return(ms<0?'逾期 ':'剩余 ')+(d?d+'天 ':'')+h+'时 '+m+'分 '+s+'秒';}
 function cats(){return [...new Set(tasks.map(t=>t.category))].sort((a,b)=>a.localeCompare(b,'zh-CN'));}
@@ -208,22 +208,28 @@ function filtered(){const q=$('search').value.trim().toLowerCase(),cat=$('catego
 function render(){closeChartMenu();const cat=$('categoryFilter').value,allCats=cats();$('categoryFilter').innerHTML='<option value="">全部类别</option>'+allCats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');if(allCats.includes(cat))$('categoryFilter').value=cat;$('categories').innerHTML=[...new Set(['科研','工作','生活','学习',...allCats])].map(c=>`<option value="${esc(c)}">`).join('');$('direction').textContent=$('sortBy').value==='deadline'?(ascending?'最迫切优先 ↑':'最晚截止优先 ↓'):(ascending?'从小到大 ↑':'从大到小 ↓');renderLinked(Date.now());tick();}
 function tick(){const now=Date.now(),pending=tasks.filter(t=>!t.done);$('today').textContent=new Date(now).toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});$('pending').textContent=pending.length;$('dueSoon').textContent=pending.filter(t=>Date.parse(t.deadline)>=now&&Date.parse(t.deadline)-now<=DAY).length;$('overdue').textContent=pending.filter(t=>Date.parse(t.deadline)<now).length;$('hours').textContent=Number(pending.reduce((s,t)=>s+t.workload,0).toFixed(1));updateCountdowns(now);if(!dragState){const a=filtered(),ids=viewportTasks(a,now).map(t=>t.id).join('|');if(ids!==lastVisibleIds||now-lastChartUpdate>=30000)renderLinked(now);}}
 let lastVisibleIds='';
-// Coordinates: urgency = hours past deadline (negative means time remaining).
+// Coordinates: independent signed importance and urgency scores.
 const chartBox={left:92,right:820,top:46,bottom:428,width:880,height:510};
-let viewport={x:[-48,47],y:[0,24]},dragState=null,gestureFrame=0,suppressChartClickUntil=0,listSignature='';
+let viewport={x:[-10,10],y:[-10,10]},dragState=null,gestureFrame=0,suppressChartClickUntil=0,listSignature='';
 const activePointers=new Map();
 const isOriginal=()=>true;
-function coordinates(t,now){const urgency=(now-Date.parse(t.deadline))/HOUR;return isOriginal()?[t.importance,urgency]:[urgency,t.workload];}
+function coordinates(t){return [t.importance,t.urgency];}
+function axisValue(range,f){if(f===0)return range[0];if(f===1)return range[1];return range[0]*(1-f)+range[1]*f;}
+function axisFraction(v,range){const span=range[1]-range[0];return Number.isFinite(span)?(v-range[0])/span:(v/2-range[0]/2)/(range[1]/2-range[0]/2);}
+function paddedDomain(lo,hi){
+ const span=hi/2-lo/2,pad=Math.max(Math.abs(lo)*Number.EPSILON*8,Math.abs(hi)*Number.EPSILON*8,Math.abs(span)*.16,lo===hi?1:Number.MIN_VALUE);
+ return [Math.max(-Number.MAX_VALUE,lo-pad),Math.min(Number.MAX_VALUE,hi+pad)];
+}
 function insideViewport(t,now){const [x,y]=coordinates(t,now);return x>=viewport.x[0]&&x<=viewport.x[1]&&y>=viewport.y[0]&&y<=viewport.y[1];}
 function viewportTasks(a,now,scope='visible'){return a.filter(t=>scope==='all'||insideViewport(t,now)===(scope==='visible'));}
-function urgencyLabel(h){const n=Math.abs(h);return n<.00001?'截止时刻':(h<0?'剩余 ':'逾期 ')+(n>=48?Number((n/24).toFixed(1))+'天':Number(n.toFixed(1))+'h');}
-function limitDomain(axis,range){const urgency=isOriginal()?axis==='y':axis==='x';const bounds=urgency?[-876000,876000]:isOriginal()?[-1000,1000]:[-200000,200000];const minSpan=urgency?.25:isOriginal()?1:.1;let span=Math.max(minSpan,Math.min(range[1]-range[0],bounds[1]-bounds[0]));let lo=Math.max(bounds[0],Math.min(range[0],bounds[1]-span));return [lo,lo+span];}
-function setViewport(next){if(![...next.x,...next.y].every(Number.isFinite))return;viewport={x:limitDomain('x',next.x),y:limitDomain('y',next.y)};}
-function resetViewport(){const now=Date.now();if(isOriginal())viewport={x:[.5,10.5],y:[-48,47]};else{let max=1;for(const t of filtered()){const h=(now-Date.parse(t.deadline))/HOUR;if(h>=-48&&h<=47)max=Math.max(max,t.workload);}viewport={x:[-48,47],y:[0,max*1.15]};}renderLinked(now);}
-function fitAllTasks(){const a=filtered(),now=Date.now();if(!a.length){resetViewport();return;}let xmin=Infinity,xmax=-Infinity,ymin=Infinity,ymax=-Infinity;for(const t of a){const [x,y]=coordinates(t,now);xmin=Math.min(xmin,x);xmax=Math.max(xmax,x);ymin=Math.min(ymin,y);ymax=Math.max(ymax,y);}const xp=Math.max(1,(xmax-xmin)*.08),yp=Math.max(1,(ymax-ymin)*.12);setViewport({x:[xmin-xp,xmax+xp],y:[ymin-yp,ymax+yp]});renderLinked(now);}
+function urgencyLabel(n){return String(Number(n.toPrecision(8)));}
+function limitDomain(axis,range){return [...range];}
+function setViewport(next){if(![...next.x,...next.y].every(Number.isFinite)||next.x[0]>=next.x[1]||next.y[0]>=next.y[1])return;viewport={x:limitDomain('x',next.x),y:limitDomain('y',next.y)};}
+function resetViewport(){viewport={x:[-10,10],y:[-10,10]};renderLinked(Date.now());}
+function fitAllTasks(){const a=filtered();if(!a.length){resetViewport();return;}let xmin=Infinity,xmax=-Infinity,ymin=Infinity,ymax=-Infinity;for(const t of a){xmin=Math.min(xmin,t.importance);xmax=Math.max(xmax,t.importance);ymin=Math.min(ymin,t.urgency);ymax=Math.max(ymax,t.urgency);}setViewport({x:paddedDomain(xmin,xmax),y:paddedDomain(ymin,ymax)});renderLinked(Date.now());}
 function focusTask(id){const t=tasks.find(t=>t.id===id);if(!t)return;const [x,y]=coordinates(t,Date.now()),xs=viewport.x[1]-viewport.x[0],ys=viewport.y[1]-viewport.y[0];setViewport({x:[x-xs/2,x+xs/2],y:[y-ys/2,y+ys/2]});$('listScope').value='visible';renderLinked(Date.now());}
-function niceTicks(lo,hi,target=5){const raw=(hi-lo)/target,p=Math.pow(10,Math.floor(Math.log10(raw))),r=raw/p,step=(r<=1?1:r<=2?2:r<=5?5:10)*p;const a=[];for(let v=Math.ceil(lo/step)*step;v<=hi+step*1e-8&&a.length<30;v+=step)a.push(Math.abs(v)<step*1e-8?0:v);return a;}
-function updateRangeControls(){const original=isOriginal();$('xRangeLabel').textContent=original?'横轴 · 重要性':'横轴 · 迫切性（小时）';$('yRangeLabel').textContent=original?'纵轴 · 迫切性（小时）':'纵轴 · 任务量（小时）';for(const axis of ['x','y'])for(let i=0;i<2;i++){const input=$(axis+(i?'Max':'Min'));if(document.activeElement!==input)input.value=Number(viewport[axis][i].toFixed(4));}}
+function niceTicks(lo,hi,target=5){const raw=hi/target-lo/target,p=Math.pow(10,Math.floor(Math.log10(raw))),r=raw/p,step=(r<=1?1:r<=2?2:r<=5?5:10)*p;if(!Number.isFinite(step)||step<=0)return [lo,hi];const a=[];for(let v=Math.ceil(lo/step)*step;Number.isFinite(v)&&v<=hi&&a.length<30;){a.push(Math.abs(v)<step*1e-8?0:v);const next=v+step;if(next===v)break;v=next;}return a;}
+function updateRangeControls(){$('xRangeLabel').textContent='横轴 · 重要性';$('yRangeLabel').textContent='纵轴 · 迫切性';for(const axis of ['x','y'])for(let i=0;i<2;i++){const input=$(axis+(i?'Max':'Min'));if(document.activeElement!==input)input.value=viewport[axis][i];}}
 function renderLinked(now=Date.now()){
   const a=filtered(),visible=viewportTasks(a,now);
   lastVisibleIds=visible.map(t=>t.id).join('|');
@@ -292,56 +298,129 @@ function installLinks(){
 }
 
 function draw(a,now){
-  const {left:L,right:R,top:T,bottom:B}=chartBox,original=isOriginal(),sx=v=>L+(v-viewport.x[0])/(viewport.x[1]-viewport.x[0])*(R-L),sy=v=>B-(v-viewport.y[0])/(viewport.y[1]-viewport.y[0])*(B-T);
-  const deadline=original?sy(0):sx(0),clamped=original?Math.max(T,Math.min(B,deadline)):Math.max(L,Math.min(R,deadline));
+  const {left:L,right:R,top:T,bottom:B}=chartBox,original=isOriginal(),sx=v=>L+axisFraction(v,viewport.x)*(R-L),sy=v=>B-axisFraction(v,viewport.y)*(B-T);
+  
   let s=`<defs><clipPath id="plotClip"><rect x="${L}" y="${T}" width="${R-L}" height="${B-T}"/></clipPath></defs><rect x="${L}" y="${T}" width="${R-L}" height="${B-T}" fill="#f4f9f6"/>`;
-  s+=original?`<rect x="${L}" y="${T}" width="${R-L}" height="${clamped-T}" fill="#fff2ed"/>`:`<rect x="${clamped}" y="${T}" width="${R-clamped}" height="${B-T}" fill="#fff2ed"/>`;
-  for(const axis of ['x','y']){const ticks=niceTicks(...viewport[axis],axis==='x'?4:5);for(const v of ticks){const p=axis==='x'?sx(v):sy(v),urgent=original?axis==='y':axis==='x',label=urgent?urgencyLabel(v):Number(v.toFixed(2));s+=axis==='x'?`<line x1="${p}" x2="${p}" y1="${T}" y2="${B}" stroke="#dce4e9"/><text x="${p}" y="${B+25}" text-anchor="middle" fill="#687587" font-size="13">${label}</text>`:`<line x1="${L}" x2="${R}" y1="${p}" y2="${p}" stroke="#dce4e9"/><text x="${L-12}" y="${p+4}" text-anchor="end" fill="#687587" font-size="13">${label}</text>`;}}
-  const u=original?viewport.y:viewport.x;if(u[0]<=0&&u[1]>=0)s+=original?`<line x1="${L}" x2="${R}" y1="${deadline}" y2="${deadline}" stroke="#b67c5e" stroke-dasharray="5 4"/>`:`<line x1="${deadline}" x2="${deadline}" y1="${T}" y2="${B}" stroke="#b67c5e" stroke-dasharray="5 4"/>`;
-  s+=`<text x="${L}" y="25" fill="#687587" font-size="14">${original?'迫切性 ↑':'任务量（小时）↑'}</text><text x="${(L+R)/2}" y="${chartBox.height-17}" text-anchor="middle" fill="#687587" font-size="14">${original?'重要性 →':'迫切性 →（剩余 ← 0 截止时刻 → 逾期）'}</text><g clip-path="url(#plotClip)">`;
+
+  for(const axis of ['x','y']){const ticks=niceTicks(...viewport[axis],axis==='x'?4:5);for(const v of ticks){const p=axis==='x'?sx(v):sy(v),urgent=original?axis==='y':axis==='x',label=urgencyLabel(v);s+=axis==='x'?`<line x1="${p}" x2="${p}" y1="${T}" y2="${B}" stroke="#dce4e9"/><text x="${p}" y="${B+25}" text-anchor="middle" fill="#687587" font-size="13">${label}</text>`:`<line x1="${L}" x2="${R}" y1="${p}" y2="${p}" stroke="#dce4e9"/><text x="${L-12}" y="${p+4}" text-anchor="end" fill="#687587" font-size="13">${label}</text>`;}}
+  if(viewport.y[0]<=0&&viewport.y[1]>=0)s+=`<line x1="${L}" x2="${R}" y1="${sy(0)}" y2="${sy(0)}" stroke="#81968c" stroke-dasharray="5 4"/>`;
+  if(viewport.x[0]<=0&&viewport.x[1]>=0)s+=`<line x1="${sx(0)}" x2="${sx(0)}" y1="${T}" y2="${B}" stroke="#81968c" stroke-dasharray="5 4"/>`;
+  s+=`<text x="${L}" y="25" fill="#687587" font-size="14">迫切性 ↑</text><text x="${(L+R)/2}" y="${chartBox.height-17}" text-anchor="middle" fill="#687587" font-size="14">重要性 →</text><g clip-path="url(#plotClip)">`;
   const size=t=>original?t.workload:t.importance,radii=normalizedRadii(a,original);
-  for(const t of [...a].sort((a,b)=>size(b)-size(a))){const [x,y]=coordinates(t,now),r=radii.get(t.id);s+=`<circle class="bubble" tabindex="0" role="button" aria-label="${esc(t.title)}，重要性${t.importance}，困难度${t.difficulty}，任务量${t.workload}小时" data-edit="${esc(t.id)}" cx="${sx(x)}" cy="${sy(y)}" r="${r}" fill="${difficultyColor(t.difficulty)}" fill-opacity="${t.done ? .25 : .72}" stroke="${difficultyColor(t.difficulty)}" stroke-width="1.5"><title>${esc(t.title)}\n${t.workload} 小时 · 重要性 ${t.importance} · 困难度 ${t.difficulty}\n${t.done?'已完成':countdown(t.deadline,now)}</title></circle>`;}
+  for(const t of [...a].sort((a,b)=>size(b)-size(a))){const [x,y]=coordinates(t,now),r=radii.get(t.id);s+=`<circle class="bubble" tabindex="0" role="button" aria-label="${esc(t.title)}，重要性${t.importance}，迫切性${t.urgency}，困难度${t.difficulty}，任务量${t.workload}小时" data-edit="${esc(t.id)}" cx="${sx(x)}" cy="${sy(y)}" r="${r}" fill="${difficultyColor(t.difficulty)}" fill-opacity="${t.done ? .25 : .72}" stroke="${difficultyColor(t.difficulty)}" stroke-width="1.5"><title>${esc(t.title)}\n${t.workload} 小时 · 重要性 ${t.importance} · 迫切性 ${t.urgency} · 困难度 ${t.difficulty}\n${t.done?'已完成':countdown(t.deadline,now)}</title></circle>`;}
   s+='</g>';s+=mobileTags(a,now,sx,sy,radii);if(!a.length)s+=`<text x="${(L+R)/2}" y="${(T+B)/2}" text-anchor="middle" fill="#87929d" font-size="16">此范围内暂无任务 · 可拖拽或缩放探索</text>`;
   const focusId=document.activeElement?.dataset?.edit;$('chart').innerHTML=s;if(focusId)[...$('chart').querySelectorAll('[data-edit]')].find(el=>el.dataset.edit===focusId)?.focus();
-  $('chart').setAttribute('aria-label',original?'重要性与迫切性联动图，拖拽平移，滚轮缩放':'迫切性与任务量联动图，拖拽平移，滚轮缩放');
+  $('chart').setAttribute('aria-label','重要性与迫切性地图，拖拽平移，滚轮缩放');
   $('legend').innerHTML='<span>困难度</span>'+difficultyColors.map((c,i)=>`<span><i style="background:${c}"></i>${i+1}</span>`).join('');
-  $('chartNote').textContent='横轴重要性，纵轴迫切性；圆圈大小表示任务量，颜色表示困难度。点击圆圈或标题查看详情。拖拽移动，滚轮或双指缩放；“适配全部筛选任务”可查看范围外日程。';
-  if(mobileMode)$('chartNote').textContent='单指拖动地图，双指缩放。轻点圆圈或标题标签查看详情。标签拥挤时可放大地图；点击“适配全部”查找范围外日程。横轴重要性，纵轴迫切性。';
+  $('chartNote').textContent='横轴重要性，纵轴迫切性（独立数值）；圆圈大小表示任务量，颜色表示困难度。点击圆圈或标题查看详情。右键地图创建日程。拖拽移动，滚轮或双指缩放；“适配全部筛选任务”可查看范围外日程。';
+  if(mobileMode)$('chartNote').textContent='长按地图创建日程；单指拖动，双指缩放。轻点圆圈或标题标签查看详情。标签拥挤时可放大地图；点击“适配全部”查找范围外日程。横轴重要性，纵轴迫切性。';
 }
 function chartPoint(e){const svg=$('chart'),ctm=svg.getScreenCTM();if(!ctm)return null;const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(ctm.inverse());return{x:p.x,y:p.y};}
 function onPlot(p){return p&&p.x>=chartBox.left&&p.x<=chartBox.right&&p.y>=chartBox.top&&p.y<=chartBox.bottom;}
 function requestChartRefresh(){if(!gestureFrame)gestureFrame=requestAnimationFrame(()=>{gestureFrame=0;renderLinked(Date.now());});}
 function zoomViewport(factor,p){const b=chartBox;const fx=(p.x-b.left)/(b.right-b.left),fy=(b.bottom-p.y)/(b.bottom-b.top),next={};for(const [axis,f] of [['x',fx],['y',fy]]){const [lo,hi]=viewport[axis],anchor=lo+(hi-lo)*f;next[axis]=[anchor+(lo-anchor)*factor,anchor+(hi-anchor)*factor];}setViewport(next);requestChartRefresh();}
 function beginGesture(){const pts=[...activePointers.values()];if(!pts.length){dragState=null;return;}const p=pts[0],q=pts[1];dragState={x:q?(p.x+q.x)/2:p.x,y:q?(p.y+q.y)/2:p.y,distance:q?Math.hypot(q.x-p.x,q.y-p.y):0,viewport:{x:[...viewport.x],y:[...viewport.y]},moved:false};}
-function installChartInteraction(){const svg=$('chart');let clickTaskId=null;
-  svg.addEventListener('wheel',e=>{const p=chartPoint(e);if(!onPlot(p))return;e.preventDefault();closeChartMenu();zoomViewport(Math.exp(Math.max(-.5,Math.min(.5,e.deltaY*(e.deltaMode===1?.02:.002)))),p);},{passive:false});
-  svg.addEventListener('pointerdown',e=>{if(e.button!==0)return;const p=chartPoint(e);if(!onPlot(p))return;closeChartMenu();clickTaskId=activePointers.size?null:(e.target.closest('[data-edit]')?.dataset.edit||null);activePointers.set(e.pointerId,p);svg.setPointerCapture(e.pointerId);beginGesture();});
-  svg.addEventListener('pointermove',e=>{if(!activePointers.has(e.pointerId)||!dragState)return;const p=chartPoint(e);if(!p)return;activePointers.set(e.pointerId,p);const pts=[...activePointers.values()],a=pts[0],b=pts[1],cx=b?(a.x+b.x)/2:a.x,cy=b?(a.y+b.y)/2:a.y;let factor=b&&dragState.distance?dragState.distance/Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)):1;factor=Math.max(.05,Math.min(20,factor));const dx=cx-dragState.x,dy=cy-dragState.y;if(Math.hypot(dx,dy)<3&&Math.abs(factor-1)<.01&&!dragState.moved)return;dragState.moved=true;clickTaskId=null;suppressChartClickUntil=Date.now()+400;svg.classList.add('dragging');const v=dragState.viewport,box=chartBox,fx=(dragState.x-box.left)/(box.right-box.left),fy=(box.bottom-dragState.y)/(box.bottom-box.top),next={};for(const [axis,f,d] of [['x',fx,-dx/(box.right-box.left)],['y',fy,dy/(box.bottom-box.top)]]){const [lo,hi]=v[axis],span=hi-lo,anchor=lo+span*f;next[axis]=[anchor+(lo-anchor)*factor+d*span*factor,anchor+(hi-anchor)*factor+d*span*factor];}setViewport(next);requestChartRefresh();});
-  function finish(e){const editId=e.type==='pointerup'&&activePointers.size===1&&!dragState?.moved?clickTaskId:null;clickTaskId=null;activePointers.delete(e.pointerId);if(svg.hasPointerCapture(e.pointerId))svg.releasePointerCapture(e.pointerId);if(activePointers.size)beginGesture();else{dragState=null;svg.classList.remove('dragging');}if(editId){suppressChartClickUntil=Date.now()+400;openMobileDetail(editId);}}
-  svg.addEventListener('pointerup',finish);svg.addEventListener('pointercancel',finish);svg.addEventListener('lostpointercapture',e=>{if(activePointers.has(e.pointerId))finish(e);});
-  svg.addEventListener('keydown',e=>{if(e.target!==svg)return;const shifts={ArrowLeft:[-.15,0],ArrowRight:[.15,0],ArrowUp:[0,.15],ArrowDown:[0,-.15]};if(shifts[e.key]){e.preventDefault();const [dx,dy]=shifts[e.key];setViewport({x:viewport.x.map(v=>v+dx*(viewport.x[1]-viewport.x[0])),y:viewport.y.map(v=>v+dy*(viewport.y[1]-viewport.y[0]))});requestChartRefresh();}else if(['+','=','-'].includes(e.key)){e.preventDefault();zoomViewport(e.key==='-'?1.25:.8,{x:(chartBox.left+chartBox.right)/2,y:(chartBox.top+chartBox.bottom)/2});}});
-  $('zoomIn').onclick=()=>zoomViewport(.8,{x:456,y:237});$('zoomOut').onclick=()=>zoomViewport(1.25,{x:456,y:237});$('resetChart').onclick=resetViewport;$('fitChart').onclick=fitAllTasks;
-  $('applyRange').onclick=()=>{const x=[$('xMin').valueAsNumber,$('xMax').valueAsNumber],y=[$('yMin').valueAsNumber,$('yMax').valueAsNumber];if(![...x,...y].every(Number.isFinite)||x[0]>=x[1]||y[0]>=y[1]){notify('范围必须是有效数字，且最小值小于最大值');return;}setViewport({x,y});renderLinked(Date.now());};
-  $('listScope').onchange=()=>renderLinked(Date.now());
+
+function installChartInteraction(){
+ const svg=$('chart');let clickTaskId=null,holdTimer=null,holdStart=null,holdOpened=false;
+ function cancelHold(){clearTimeout(holdTimer);holdTimer=null;holdStart=null;}
+ mapHoldCancel=cancelHold;
+ svg.addEventListener('wheel',e=>{const p=chartPoint(e);if(!onPlot(p))return;e.preventDefault();cancelHold();closeChartMenu();zoomViewport(Math.exp(Math.max(-.5,Math.min(.5,e.deltaY*(e.deltaMode===1?.02:.002)))),p);},{passive:false});
+ svg.addEventListener('pointerdown',e=>{
+  if(e.button!==0)return;cancelHold();const p=chartPoint(e);if(!onPlot(p))return;
+  if(!activePointers.size)holdOpened=false;
+  closeChartMenu();clickTaskId=activePointers.size?null:(e.target.closest('[data-edit]')?.dataset.edit||null);
+  activePointers.set(e.pointerId,p);svg.setPointerCapture(e.pointerId);beginGesture();
+  if(e.pointerType==='touch'&&activePointers.size===1){
+   holdStart={x:e.clientX,y:e.clientY};
+   holdTimer=setTimeout(()=>{
+    if(activePointers.size!==1||dragState?.moved)return;
+    holdOpened=true;clickTaskId=null;dragState=null;svg.classList.remove('dragging');suppressChartClickUntil=Date.now()+800;
+    openChartCreateMenu(p,e.clientX,e.clientY);
+   },550);
+  }
+ });
+ svg.addEventListener('pointermove',e=>{
+  if(holdStart&&Math.hypot(e.clientX-holdStart.x,e.clientY-holdStart.y)>8)cancelHold();
+  if(holdOpened||!activePointers.has(e.pointerId)||!dragState)return;
+  const p=chartPoint(e);if(!p)return;activePointers.set(e.pointerId,p);
+  const pts=[...activePointers.values()],a=pts[0],b=pts[1],cx=b?(a.x+b.x)/2:a.x,cy=b?(a.y+b.y)/2:a.y;
+  let factor=b&&dragState.distance?dragState.distance/Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)):1;factor=Math.max(.05,Math.min(20,factor));
+  const dx=cx-dragState.x,dy=cy-dragState.y;if(Math.hypot(dx,dy)<3&&Math.abs(factor-1)<.01&&!dragState.moved)return;
+  cancelHold();dragState.moved=true;clickTaskId=null;suppressChartClickUntil=Date.now()+400;svg.classList.add('dragging');
+  const v=dragState.viewport,box=chartBox,fx=(dragState.x-box.left)/(box.right-box.left),fy=(box.bottom-dragState.y)/(box.bottom-box.top),next={};
+  for(const [axis,f,d] of [['x',fx,-dx/(box.right-box.left)],['y',fy,dy/(box.bottom-box.top)]]){
+   const [lo,hi]=v[axis],span=hi-lo,anchor=axisValue(v[axis],f);
+   next[axis]=[anchor+(lo-anchor)*factor+d*span*factor,anchor+(hi-anchor)*factor+d*span*factor];
+  }
+  setViewport(next);requestChartRefresh();
+ });
+ function finish(e){
+  cancelHold();const editId=e.type==='pointerup'&&!holdOpened&&$('chartMenu').hidden&&activePointers.size===1&&!dragState?.moved?clickTaskId:null;clickTaskId=null;
+  activePointers.delete(e.pointerId);if(svg.hasPointerCapture(e.pointerId))svg.releasePointerCapture(e.pointerId);
+  if(activePointers.size&&!holdOpened)beginGesture();else{dragState=null;svg.classList.remove('dragging');}
+  if(holdOpened||!$('chartMenu').hidden)suppressChartClickUntil=Date.now()+800;
+  if(!activePointers.size)holdOpened=false;
+  if(editId){suppressChartClickUntil=Date.now()+400;openMobileDetail(editId);}
+ }
+ svg.addEventListener('pointerup',finish);svg.addEventListener('pointercancel',finish);
+ svg.addEventListener('lostpointercapture',e=>{if(activePointers.has(e.pointerId))finish(e);});
+ svg.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){cancelHold();closeChartMenu();return;}
+  if(e.target!==svg)return;
+  if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();const p={x:(chartBox.left+chartBox.right)/2,y:(chartBox.top+chartBox.bottom)/2},r=svg.getBoundingClientRect();openChartCreateMenu(p,(r.left+r.right)/2,(r.top+r.bottom)/2);return;}
+  const shifts={ArrowLeft:[-.15,0],ArrowRight:[.15,0],ArrowUp:[0,.15],ArrowDown:[0,-.15]};
+  if(shifts[e.key]){e.preventDefault();const [dx,dy]=shifts[e.key];setViewport({x:viewport.x.map(v=>v+dx*(viewport.x[1]-viewport.x[0])),y:viewport.y.map(v=>v+dy*(viewport.y[1]-viewport.y[0]))});requestChartRefresh();}
+  else if(['+','=','-'].includes(e.key)){e.preventDefault();zoomViewport(e.key==='-'?1.25:.8,{x:(chartBox.left+chartBox.right)/2,y:(chartBox.top+chartBox.bottom)/2});}
+ });
+ $('zoomIn').onclick=()=>zoomViewport(.8,{x:(chartBox.left+chartBox.right)/2,y:(chartBox.top+chartBox.bottom)/2});
+ $('zoomOut').onclick=()=>zoomViewport(1.25,{x:(chartBox.left+chartBox.right)/2,y:(chartBox.top+chartBox.bottom)/2});
+ $('resetChart').onclick=resetViewport;$('fitChart').onclick=fitAllTasks;
+ $('applyRange').onclick=()=>{const x=[$('xMin').valueAsNumber,$('xMax').valueAsNumber],y=[$('yMin').valueAsNumber,$('yMax').valueAsNumber];if(![...x,...y].every(Number.isFinite)||x[0]>=x[1]||y[0]>=y[1]){notify('范围必须是有效数字，且最小值小于最大值');return;}setViewport({x,y});renderLinked(Date.now());};
+ $('listScope').onchange=()=>renderLinked(Date.now());
+ window.addEventListener('blur',()=>{cancelHold();closeChartMenu();activePointers.clear();dragState=null;});
 }
 function localInput(date){const d=new Date(date);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);}
-function openEditor(id){const t=tasks.find(t=>t.id===id);resetEditorAI(t);$('taskForm').reset();$('editorTitle').textContent=t?'编辑日程':'新建日程';$('taskId').value=t?.id||'';$('taskTitle').value=t?.title||'';$('taskDetails').value=t?.details||'';$('taskCategory').value=t?.category||'工作';$('taskWorkload').value=t?.workload||1;$('taskDeadline').value=localInput(t?.deadline||Date.now()+DAY);$('taskImportance').value=t?.importance||5;$('importanceValue').value=$('taskImportance').value;$('taskDone').checked=t?.done||false;$('taskDifficulty').value=t?.difficulty||5;updateDifficulty();setDetailsMode(t?.detailsMode||'text');$('editor').showModal();$('taskTitle').focus();}
-$('taskForm').onsubmit=e=>{e.preventDefault();const title=$('taskTitle').value.trim(),category=$('taskCategory').value.trim();if(!title||!category){notify('题目和类别不能仅包含空格');return;}const date=new Date($('taskDeadline').value);if(!Number.isFinite(date.getTime())){notify('请填写有效的截止时间');return;}const t={id:$('taskId').value||uid(),title,details:$('taskDetails').value,category,importance:Number($('taskImportance').value),workload:Number($('taskWorkload').value),deadline:date.toISOString(),done:$('taskDone').checked,difficulty:Number($('taskDifficulty').value),detailsMode};try{validate([t]);}catch(e){notify(e.message);return;}const i=tasks.findIndex(v=>v.id===t.id);if(i<0)tasks.push(t);else tasks[i]=t;save();$('editor').close();render();};
+function openEditor(id){const t=tasks.find(t=>t.id===id);resetEditorAI(t);$('taskForm').reset();$('editorTitle').textContent=t?'编辑日程':'新建日程';$('taskId').value=t?.id||'';$('taskTitle').value=t?.title||'';$('taskDetails').value=t?.details||'';$('taskCategory').value=t?.category||'工作';$('taskWorkload').value=t?.workload||1;$('taskDeadline').value=localInput(t?.deadline||Date.now()+DAY);$('taskImportance').value=t?.importance??0;$('taskUrgency').value=t?.urgency??0;$('importanceValue').value=$('taskImportance').value;$('taskDone').checked=t?.done||false;$('taskDifficulty').value=t?.difficulty||5;updateDifficulty();setDetailsMode(t?.detailsMode||'text');$('editor').showModal();$('taskTitle').focus();}
+$('taskForm').onsubmit=e=>{e.preventDefault();const title=$('taskTitle').value.trim(),category=$('taskCategory').value.trim();if(!title||!category){notify('题目和类别不能仅包含空格');return;}const date=new Date($('taskDeadline').value);if(!Number.isFinite(date.getTime())){notify('请填写有效的截止时间');return;}const t={id:$('taskId').value||uid(),title,details:$('taskDetails').value,category,importance:Number($('taskImportance').value),urgency:Number($('taskUrgency').value),workload:Number($('taskWorkload').value),deadline:date.toISOString(),done:$('taskDone').checked,difficulty:Number($('taskDifficulty').value),detailsMode};try{validate([t]);}catch(e){notify(e.message);return;}const i=tasks.findIndex(v=>v.id===t.id);if(i<0)tasks.push(t);else tasks[i]=t;save();$('editor').close();render();};
 $('taskImportance').oninput=()=>$('importanceValue').value=$('taskImportance').value;$('newBtn').onclick=()=>openEditor();$('closeEditor').onclick=$('cancelEditor').onclick=()=>$('editor').close();$('helpBtn').onclick=()=>$('help').showModal();$('closeHelp').onclick=()=>$('help').close();
-let chartMenuId=null;
-function closeChartMenu(restore=false){const id=chartMenuId;$('chartMenu').hidden=true;chartMenuId=null;if(restore&&id)[...$('chart').querySelectorAll('[data-edit]')].find(el=>el.dataset.edit===id)?.focus();}
+
+let chartMenuId=null,chartCreatePoint=null,mapHoldCancel=()=>{};
+function closeChartMenu(restore=false){$('chartMenu').hidden=true;chartCreatePoint=null;chartMenuId=null;if(restore)$('chart').focus();}
+function mapCoordinateAt(p){
+ if(!onPlot(p))return null;
+ const fx=(p.x-chartBox.left)/(chartBox.right-chartBox.left),fy=(chartBox.bottom-p.y)/(chartBox.bottom-chartBox.top);
+ const importance=axisValue(viewport.x,fx),urgency=axisValue(viewport.y,fy);
+ return Number.isFinite(importance)&&Number.isFinite(urgency)?{importance,urgency}:null;
+}
+function openChartCreateMenu(p,x,y){
+ const point=mapCoordinateAt(p);if(!point)return;
+ chartCreatePoint=point;suppressChartClickUntil=Date.now()+800;
+ $('chartMenuTitle').textContent='重要性 '+urgencyLabel(point.importance)+' · 迫切性 '+urgencyLabel(point.urgency);
+ const menu=$('chartMenu');menu.hidden=false;
+ menu.style.left=Math.max(8,Math.min(x,window.innerWidth-menu.offsetWidth-8))+'px';
+ menu.style.top=Math.max(8,Math.min(y,window.innerHeight-menu.offsetHeight-8))+'px';
+ $('chartMenuCreate').focus();
+}
+function createTaskAtMenu(){
+ const point=chartCreatePoint;if(!point)return;
+ closeChartMenu();openEditor();
+ $('taskImportance').value=String(point.importance);$('importanceValue').value=$('taskImportance').value;
+ $('taskUrgency').value=String(point.urgency);
+ editorAITouched.add('importance');editorAITouched.add('urgency');$('taskTitle').focus();
+}
+
 function deleteTask(id){const t=tasks.find(t=>t.id===id);if(!t)return;if(!confirm('删除“'+t.title+'”？'))return;closeChartMenu();tasks=tasks.filter(v=>v.id!==id);save();render();notify('日程已删除',()=>{if(!tasks.some(v=>v.id===t.id))tasks.push(t);save();render();});}
 function act(e){const b=e.target.closest('[data-edit],[data-toggle],[data-delete],[data-focus],[data-select]');if(!b)return;closeChartMenu();if(b.dataset.select){selectTask(b.dataset.select);return;}if(b.dataset.focus){focusTask(b.dataset.focus);selectedTaskId=b.dataset.focus;highlightSelection();requestLinks();return;}if(b.dataset.edit){openEditor(b.dataset.edit);return;}if(b.dataset.toggle){const t=tasks.find(t=>t.id===b.dataset.toggle);if(!t)return;t.done=!t.done;save();render();}if(b.dataset.delete)deleteTask(b.dataset.delete);}
-function openChartMenu(id,x,y){const t=tasks.find(t=>t.id===id);if(!t)return;chartMenuId=id;$('chartMenuTitle').textContent=t.title;const menu=$('chartMenu');menu.hidden=false;menu.style.left=Math.max(8,Math.min(x,window.innerWidth-menu.offsetWidth-8))+'px';menu.style.top=Math.max(8,Math.min(y,window.innerHeight-menu.offsetHeight-8))+'px';$('chartMenuEdit').focus();}
 $('rows').onclick=act;$('chart').onclick=e=>{if(Date.now()<suppressChartClickUntil)return;const b=e.target.closest('[data-edit]');if(b){openMobileDetail(b.dataset.edit);}else{selectedTaskId=null;highlightSelection();requestLinks();}};
 $('chart').ondblclick=e=>{const b=e.target.closest('[data-edit]');if(b)openEditor(b.dataset.edit);};
-$('chart').oncontextmenu=e=>{const bubble=e.target.closest('[data-edit]');if(!bubble)return;e.preventDefault();openChartMenu(bubble.dataset.edit,e.clientX,e.clientY);};
-$('chart').onkeydown=e=>{const bubble=e.target.closest('[data-edit]');if(!bubble)return;if(e.key==='Delete'){e.preventDefault();deleteTask(bubble.dataset.edit);}else if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();const r=bubble.getBoundingClientRect();openChartMenu(bubble.dataset.edit,r.right,r.bottom);}else if(e.key==='Enter'||e.key===' '){e.preventDefault();if(e.shiftKey)openEditor(bubble.dataset.edit);else selectTask(bubble.dataset.edit,true);}};
-$('chartMenuEdit').onclick=()=>{const id=chartMenuId;closeChartMenu();if(id)openEditor(id);};$('chartMenuDelete').onclick=()=>{const id=chartMenuId;closeChartMenu(true);if(id)deleteTask(id);};
-$('chartMenu').onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();closeChartMenu(true);}else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();(document.activeElement===$('chartMenuEdit')?$('chartMenuDelete'):$('chartMenuEdit')).focus();}else if(e.key==='Tab')closeChartMenu();};
+$('chart').oncontextmenu=e=>{e.preventDefault();if(activePointers.size>1||dragState?.moved)return;const p=chartPoint(e);if(!onPlot(p))return;mapHoldCancel();if(!$('chartMenu').hidden)return;openChartCreateMenu(p,e.clientX,e.clientY);};
+$('chart').onkeydown=e=>{const bubble=e.target.closest('[data-edit]');if(!bubble)return;if(e.key==='Delete'){e.preventDefault();deleteTask(bubble.dataset.edit);}else if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();const r=bubble.getBoundingClientRect(),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;openChartCreateMenu(chartPoint({clientX:x,clientY:y}),x,y);}else if(e.key==='Enter'||e.key===' '){e.preventDefault();if(e.shiftKey)openEditor(bubble.dataset.edit);else selectTask(bubble.dataset.edit,true);}};
+$('chartMenuCreate').onclick=createTaskAtMenu;
+$('chartMenu').onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();closeChartMenu(true);}else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();$('chartMenuCreate').focus();}else if(e.key==='Tab')closeChartMenu();};
 window.addEventListener('pointerdown',e=>{if(!$('chartMenu').hidden&&!$('chartMenu').contains(e.target))closeChartMenu();});window.addEventListener('resize',()=>closeChartMenu());window.addEventListener('scroll',()=>closeChartMenu(),true);
 $('search').oninput=render;$('categoryFilter').onchange=$('statusFilter').onchange=render;$('sortBy').onchange=()=>{ascending=$('sortBy').value==='deadline';render();};$('direction').onclick=()=>{ascending=!ascending;render();};
-$('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify({app:'FocusSchedule',version:2,exportedAt:new Date().toISOString(),tasks},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='日程备份-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('备份已导出');};
+$('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify({app:'FocusSchedule',version:4,exportedAt:new Date().toISOString(),tasks},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='日程备份-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('备份已导出');};
 $('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{if(f.size>30*1024*1024)throw Error('文件超过 30 MB');const incoming=unpack(JSON.parse(await f.text()));const conflicts=incoming.filter(t=>tasks.some(v=>v.id===t.id)).length;if(!confirm(`导入 ${incoming.length} 条日程，其中 ${conflicts} 条将更新同 ID 日程；其余现有日程保留。继续？`))return;const map=new Map(tasks.map(t=>[t.id,t]));incoming.forEach(t=>map.set(t.id,t));const merged=[...map.values()];validate(merged);tasks=merged;save();render();notify('导入完成');}catch(err){notify('导入失败：'+err.message);}finally{e.target.value='';}};
 window.addEventListener('storage',e=>{if(e.key!==KEY||storageBlocked)return;try{tasks=e.newValue?unpack(JSON.parse(e.newValue)):[];render();notify('已同步另一个窗口的修改');}catch(err){notify('另一个窗口的数据无效，未同步');}});
 
@@ -355,7 +434,7 @@ $('textMode').onclick=()=>setDetailsMode('text');$('markdownMode').onclick=()=>s
 const AIKEY='focus-schedule-ai-v1';
 function aiSettings(){try{return JSON.parse(localStorage.getItem(AIKEY)||'{}')}catch{return {}}}
 function saveAiSettings(){localStorage.setItem(AIKEY,JSON.stringify({base:$('aiBase').value.trim().replace(/\/$/,''),model:$('aiModel').value.trim(),key:$('aiKey').value.trim()}));notify('AI 设置已保存在本机');}
-function aiContext(){return tasks.map(t=>({title:t.title,details:t.details,category:t.category,importance:t.importance,difficulty:t.difficulty,workload_hours:t.workload,deadline:t.deadline,done:t.done}));}
+function aiContext(){return tasks.map(t=>({title:t.title,details:t.details,category:t.category,importance:t.importance,urgency:t.urgency,difficulty:t.difficulty,workload_hours:t.workload,deadline:t.deadline,done:t.done}));}
 function aiTimeContext(now=new Date()){
 const pad=n=>String(n).padStart(2,'0');
 const date=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
@@ -367,8 +446,8 @@ async function callAI(instruction){const base=$('aiBase').value.trim().replace(/
 function openAi(){const s=aiSettings();$('aiBase').value=s.base||'https://api.minimax.cn/v1';$('aiModel').value=s.model||'MiniMax-M2.5';$('aiKey').value=s.key||'';$('aiDialog').showModal();$('aiPrompt').focus();}
 $('aiBtn').onclick=openAi;$('closeAi').onclick=()=>$('aiDialog').close();$('saveAi').onclick=saveAiSettings;$('reportAi').onclick=()=>callAI('请生成今日工作汇报：概括已完成事项、未完成事项、逾期和今日截止任务，并指出需要关注的风险。');$('planAi').onclick=()=>callAI('请给出今天的完成建议：按优先级安排 3–5 个行动步骤，考虑重要性、截止时间、任务量、困难度和依赖关系；建议合理休息，不要安排已完成任务。');$('askAi').onclick=()=>{const q=$('aiPrompt').value.trim();if(q)callAI(q);else $('aiStatus').textContent='请先输入问题。';};$('aiPrompt').onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')$('askAi').click();};
 
-const editorAIFields={title:'taskTitle',details:'taskDetails',category:'taskCategory',workload:'taskWorkload',deadline:'taskDeadline',importance:'taskImportance',difficulty:'taskDifficulty'};
-const editorAILabels={title:'题目',details:'细节',category:'类别',workload:'预计工时',deadline:'截止时间',importance:'重要性',difficulty:'困难度'};
+const editorAIFields={title:'taskTitle',details:'taskDetails',category:'taskCategory',workload:'taskWorkload',deadline:'taskDeadline',importance:'taskImportance',urgency:'taskUrgency',difficulty:'taskDifficulty'};
+const editorAILabels={title:'题目',details:'细节',category:'类别',workload:'预计工时',deadline:'截止时间',importance:'重要性',urgency:'迫切性',difficulty:'困难度'};
 let editorAITouched=new Set(),editorAIController=null,editorAIEpoch=0,editorAIUndo=null,editorAIHoverTimer,editorAIHideTimer,editorAITarget=null,editorAITap=null;
 function editorAIValues(){return Object.fromEntries(Object.entries(editorAIFields).map(([k,id])=>[k,$(id).value]));}
 function editorAIKnown(values,target){
@@ -418,7 +497,8 @@ function readEditorAIResult(text,target,evidence){
  const out={};for(const k of Object.keys(editorAIFields)){
   if(target&&k!==target)continue;const v=raw[k];if(v===null||v===undefined||v==='')continue;
   if(['title','category','details'].includes(k)){const max={title:160,category:40,details:10000}[k];if(typeof v==='string'&&v.trim()&&v.length<=max)out[k]=v.trim();}
-  else if(['importance','difficulty'].includes(k)){if(Number.isInteger(v)&&v>=1&&v<=10)out[k]=String(v);}
+  else if(['importance','urgency'].includes(k)){if(typeof v==='number'&&Number.isFinite(v))out[k]=String(v);}
+  else if(k==='difficulty'){if(Number.isInteger(v)&&v>=1&&v<=10)out[k]=String(v);}
   else if(k==='workload'){if(typeof v==='number'&&Number.isFinite(v)&&v>=.1&&v<=100000)out[k]=String(Math.round(v*10)/10);}
   else if(k==='deadline'){const d=editorAIDate(v);if(d&&typeof raw.deadlineEvidence==='string'&&raw.deadlineEvidence.trim().length>=2&&evidence.includes(raw.deadlineEvidence.trim()))out[k]=d;}
  }
@@ -448,11 +528,11 @@ async function runEditorAI(target=null){
   + (target
       ? '仅补全指定字段；基于该日程已确定的信息做适度推断，缺乏依据返回 null，不要改写其他字段。'
       : '从一段文本提取一个日程的关键项；不要拆成多个候选。')
-  + '允许字段 title, details, category, workload, deadline, importance, difficulty；workload 为小时数字，重要性/困难度为 1-10 整数。细节可使用简短 Markdown，保留原文要求，不添加无依据的硬性要求。'
+  + '允许字段 title, details, category, workload, deadline, importance, urgency, difficulty；workload 为小时数字，重要性和迫切性为任意有限正负小数，困难度为 1-10 整数。细节可使用简短 Markdown，保留原文要求，不添加无依据的硬性要求。'
   // ↓↓↓ 新增：允许对 workload / importance / difficulty 做合理评估
   + '对于 workload、importance、difficulty：这三个字段是主观评估，请根据任务标题、细节和常识给出合理估计，不要返回 null。'
   + 'workload 按“实际投入小时数”评估（例如：写一篇论文 20-60，读一篇论文 1-3，开一次会 0.5-2，投稿准备 2-10，整理笔记 0.5-2）。'
-  + 'importance 按“对用户长期目标的相对影响”给 1-10 整数（例如：投稿顶会 8-9，日常阅读 3-5，例行会议 2-4）。'
+  + 'importance 按对长期目标的相对影响估计，使用任意有限正负小数，不限制在1到10。urgency是独立的主观迫切性，也接受任意有限正负小数；禁止把它设为剩余小时数，缺乏依据时返回null。'
   + 'difficulty 按“技术/认知难度”给 1-10 整数（例如：写论文 7-9，读论文 4-7，例行会议 1-3，整理笔记 1-3）。'
   + '只有在完全没有任何可依据信息、连任务类型都无法判断时，这三个字段才返回 null。'
   // ↓↓↓ deadline 仍然严格
@@ -523,6 +603,7 @@ initEditorAI();
 const mobileQuery=window.matchMedia('(max-width: 767px), (pointer: coarse) and (max-height: 600px) and (max-width: 1100px)');
 let mobileMode=mobileQuery.matches,mobileDetailId=null,mobileResizeFrame=0;
 function updateMobileLayout(){
+ mapHoldCancel();closeChartMenu();
  mobileMode=mobileQuery.matches;document.body.classList.toggle('mobile-mode',mobileMode);
  const w=mobileMode?Math.max(280,Math.round($('chart').getBoundingClientRect().width||window.innerWidth-24)):880;
  const h=mobileMode?Math.max(380,Math.min(620,Math.round(window.innerHeight*.64))):510;
@@ -571,7 +652,7 @@ function mobileTags(a,now,sx,sy,radii){
 function openMobileDetail(id){
  const t=tasks.find(t=>t.id===id);if(!t)return;mobileDetailId=id;
  $('mobileDetailTitle').textContent=t.title;
- $('mobileDetailMeta').textContent=t.category+' · 重要性 '+t.importance+'/10 · 困难度 '+t.difficulty+'/10 · '+t.workload+' 小时';
+ $('mobileDetailMeta').textContent=t.category+' · 重要性 '+t.importance+' · 迫切性 '+t.urgency+' · 困难度 '+t.difficulty+'/10 · '+t.workload+' 小时';
  $('mobileDetailDate').textContent='截止 '+new Date(t.deadline).toLocaleString();
  $('mobileDetailCountdown').textContent=t.done?'已完成':countdown(t.deadline);
  $('mobileDetailBody').innerHTML=t.detailsMode==='markdown'?markdown(t.details):'<div style="white-space:pre-wrap">'+esc(t.details||'暂无细节')+'</div>';
@@ -586,7 +667,7 @@ function initMobile(){
  $('mobileComplete').onclick=()=>{const t=tasks.find(t=>t.id===mobileDetailId);if(!t)return;t.done=!t.done;save();render();openMobileDetail(t.id);};
  $('mobileDelete').onclick=()=>{deleteTask(mobileDetailId);if(!tasks.some(t=>t.id===mobileDetailId))$('mobileDetail').close();};
  $('chart').addEventListener('keydown',e=>{if(!['Enter',' '].includes(e.key))return;const el=e.target.closest('[data-edit]');if(el){e.preventDefault();e.stopImmediatePropagation();openMobileDetail(el.dataset.edit);}},true);
- $('chart').addEventListener('contextmenu',e=>{if(mobileMode){e.preventDefault();e.stopImmediatePropagation();}},true);
+
  $('chart').addEventListener('dblclick',e=>{e.preventDefault();e.stopImmediatePropagation();},true);
  const resize=()=>{if(!mobileResizeFrame)mobileResizeFrame=requestAnimationFrame(()=>{mobileResizeFrame=0;updateMobileLayout();});};
  mobileQuery.addEventListener('change',resize);window.addEventListener('resize',resize);updateMobileLayout();
