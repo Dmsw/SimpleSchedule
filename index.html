@@ -14,7 +14,7 @@ main{max-width:1760px}.linked-layout{display:grid;grid-template-columns:minmax(0
 .selected-bubble{stroke:black!important;stroke-width:3!important;fill-opacity:1!important}.selection-box{fill:#286c5918;stroke:#286c59;stroke-width:1.5;stroke-dasharray:6 4;pointer-events:none}
 .taskcard.selected-card{box-shadow:inset 4px 0 0 #111;background:#f0f4f2}.taskcard{cursor:pointer}
 
-.mobile-only{display:none}.mobile-task-tag{cursor:pointer}.mobile-task-tag:focus rect{stroke:#111;stroke-width:3}
+.mobile-only{display:none}.mobile-task-tag{cursor:pointer}.mobile-task-tag:focus rect{stroke:#111;stroke-width:3}.inline-tag-editor{position:fixed;z-index:40;margin:0;padding:0 9px;border:2px solid var(--accent);border-radius:6px;background:white;color:#193329;font:13px/1.2 "Segoe UI","Microsoft YaHei",sans-serif;box-shadow:0 2px 10px #0002;outline:none}
 body.mobile-mode .mobile-only{display:inline-flex}
 body.mobile-mode #listView,body.mobile-mode #taskLinks,body.mobile-mode .top h2,body.mobile-mode .top .muted,body.mobile-mode .brand .sub,body.mobile-mode #sortBy,body.mobile-mode #direction{display:none!important}
 body.mobile-mode header{padding:12px;flex-wrap:wrap;gap:10px}
@@ -638,13 +638,42 @@ function createTaskAtMenu(){
  closeChartMenu();
  const t={id:uid(),title:'',details:'',category:'工作',importance:point.importance,urgency:point.urgency,workload:1,deadline:new Date(Date.now()+DAY).toISOString(),done:false,difficulty:5,detailsMode:'text',draft:true};
  tasks.push(t);save();setSelectedTasks([t.id]);render();
- notify('已在当前位置创建空白日程；双击空白标签即可填写。');
+ notify('已在当前位置创建空白日程；双击空白标签可直接原位填写标题。');
 }
 
+let inlineTagEditor=null;
+function editTagInline(tag){
+ const id=tag?.dataset?.edit,t=tasks.find(v=>v.id===id);if(!t)return;
+ if(inlineTagEditor){inlineTagEditor.commit(false);}
+ const box=(tag.querySelector('rect')||tag).getBoundingClientRect(),input=document.createElement('input');
+ input.className='inline-tag-editor';input.type='text';input.maxLength=160;input.value=t.title;input.placeholder='输入标题';
+ input.style.left=box.left+'px';input.style.top=box.top+'px';input.style.width=Math.max(64,box.width)+'px';input.style.height=Math.max(32,box.height)+'px';
+ document.body.append(input);
+ let finished=false;
+ const cleanup=()=>{if(finished)return false;finished=true;window.removeEventListener('resize',reposition);window.removeEventListener('scroll',reposition,true);input.remove();inlineTagEditor=null;return true;};
+ const reposition=()=>{if(finished||!tag.isConnected)return;const r=(tag.querySelector('rect')||tag).getBoundingClientRect();input.style.left=r.left+'px';input.style.top=r.top+'px';input.style.width=Math.max(64,r.width)+'px';input.style.height=Math.max(32,r.height)+'px';};
+ const commit=saveChange=>{
+  if(!cleanup())return;
+  if(saveChange){
+   const value=input.value.trim();
+   t.title=value;
+   if(value)delete t.draft;else t.draft=true;
+   save();render();
+  }
+ };
+ inlineTagEditor={input,commit};
+ input.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();commit(true);}
+  else if(e.key==='Escape'){e.preventDefault();commit(false);}
+ });
+ input.addEventListener('blur',()=>commit(true));
+ window.addEventListener('resize',reposition);window.addEventListener('scroll',reposition,true);
+ input.focus();input.select();
+}
 function deleteTask(id){const t=tasks.find(t=>t.id===id);if(!t)return;if(!confirm('删除“'+t.title+'”？'))return;closeChartMenu();tasks=tasks.filter(v=>v.id!==id);save();render();notify('日程已删除',()=>{if(!tasks.some(v=>v.id===t.id))tasks.push(t);save();render();});}
 function act(e){const b=e.target.closest('[data-edit],[data-toggle],[data-delete],[data-focus],[data-select]');if(!b)return;closeChartMenu();if(b.dataset.select){selectTask(b.dataset.select);return;}if(b.dataset.focus){focusTask(b.dataset.focus);selectedTaskId=b.dataset.focus;highlightSelection();requestLinks();return;}if(b.dataset.edit){openEditor(b.dataset.edit);return;}if(b.dataset.toggle){const t=tasks.find(t=>t.id===b.dataset.toggle);if(!t)return;t.done=!t.done;save();render();}if(b.dataset.delete)deleteTask(b.dataset.delete);}
 $('rows').onclick=act;$('chart').onclick=e=>{if(Date.now()<suppressChartClickUntil)return;if(!e.target.closest('[data-edit]')){selectedTaskId=null;highlightSelection();requestLinks();}};
-$('chart').ondblclick=e=>{const tag=e.target.closest('.mobile-task-tag[data-edit]'),b=tag||e.target.closest('.bubble[data-edit]');if(b){e.preventDefault();e.stopPropagation();openEditor(b.dataset.edit);}};
+$('chart').ondblclick=e=>{const tag=e.target.closest('.mobile-task-tag[data-edit]');if(tag){e.preventDefault();e.stopPropagation();editTagInline(tag);return;}const bubble=e.target.closest('.bubble[data-edit]');if(bubble){e.preventDefault();e.stopPropagation();openEditor(bubble.dataset.edit);}};
 $('chart').oncontextmenu=e=>{e.preventDefault();if(radiusEdit||bubbleDrag)return;if(activePointers.size>1||dragState?.moved)return;const p=chartPoint(e);if(!onPlot(p))return;mapHoldCancel();if(!$('chartMenu').hidden)return;openChartCreateMenu(p,e.clientX,e.clientY);};
 $('chart').onkeydown=e=>{const bubble=e.target.closest('[data-edit]');if(!bubble)return;if(e.key==='Delete'){e.preventDefault();deleteTask(bubble.dataset.edit);}else if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();const r=bubble.getBoundingClientRect(),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;openChartCreateMenu(chartPoint({clientX:x,clientY:y}),x,y);}else if(e.key==='Enter'||e.key===' '){e.preventDefault();if(e.shiftKey)openEditor(bubble.dataset.edit);else selectTask(bubble.dataset.edit,true);}};
 $('chartMenuCreate').onclick=createTaskAtMenu;
@@ -879,7 +908,7 @@ function mobileTags(a,now,sx,sy,radii){
  const points=a.map(t=>{const [x,y]=coordinates(t,now);return{id:t.id,title:t.title,cx:sx(x),cy:sy(y),r:radii.get(t.id),color:difficultyColor(t.difficulty)};});
  const tags=placeMobileTags(points,chartBox);
  const lines=tags.map(p=>{const l=mobileTagConnector(p);return '<line class="mobile-tag-link" x1="'+l.x1+'" y1="'+l.y1+'" x2="'+l.x2+'" y2="'+l.y2+'" stroke="'+p.color+'" stroke-width="1.5" stroke-opacity=".8" pointer-events="none"/>';}).join('');
- return lines+tags.map(p=>'<g class="mobile-task-tag" data-edit="'+esc(p.id)+'" tabindex="0" role="button" aria-label="'+(p.title?'查看日程：'+esc(p.title):'空白日程标签，双击填写')+'"><title>'+esc(p.title||'双击填写日程')+'</title><rect x="'+p.x+'" y="'+p.y+'" width="'+p.width+'" height="44" rx="6" fill="white" fill-opacity=".95" stroke="'+p.color+'"/><text x="'+(p.x+10)+'" y="'+(p.y+27)+'" font-size="13" fill="#193329" pointer-events="none">'+esc(p.text)+'</text></g>').join('');
+ return lines+tags.map(p=>'<g class="mobile-task-tag" data-edit="'+esc(p.id)+'" tabindex="0" role="button" aria-label="'+(p.title?'查看日程：'+esc(p.title):'空白日程标签，双击填写')+'"><title>'+esc(p.title||'双击直接填写标题')+'</title><rect x="'+p.x+'" y="'+p.y+'" width="'+p.width+'" height="44" rx="6" fill="white" fill-opacity=".95" stroke="'+p.color+'"/><text x="'+(p.x+10)+'" y="'+(p.y+27)+'" font-size="13" fill="#193329" pointer-events="none">'+esc(p.text)+'</text></g>').join('');
 }
 function openMobileDetail(id){
  const t=tasks.find(t=>t.id===id);if(!t)return;mobileDetailId=id;
