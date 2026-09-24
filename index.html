@@ -11,7 +11,7 @@ main{max-width:1760px}.linked-layout{display:grid;grid-template-columns:minmax(0
 
 
 #taskLinks{position:fixed;inset:0;width:100vw;height:100vh;z-index:5;pointer-events:none;overflow:hidden}
-.selected-bubble{stroke:black!important;stroke-width:3!important;fill-opacity:1!important}
+.selected-bubble{stroke:black!important;stroke-width:3!important;fill-opacity:1!important}.selection-box{fill:#286c5918;stroke:#286c59;stroke-width:1.5;stroke-dasharray:6 4;pointer-events:none}
 .taskcard.selected-card{box-shadow:inset 4px 0 0 #111;background:#f0f4f2}.taskcard{cursor:pointer}
 
 .mobile-only{display:none}.mobile-task-tag{cursor:pointer}.mobile-task-tag:focus rect{stroke:#111;stroke-width:3}
@@ -339,7 +339,10 @@ function beginGesture(){const pts=[...activePointers.values()];if(!pts.length){d
 
 
 let bubbleDrag=null;
-function bubblePreview(t){return bubbleDrag?.id===t.id&&bubbleDrag.moved?{...t,...bubbleDrag.preview}:t;}
+function bubblePreview(t){
+ const preview=bubbleDrag?.moved?bubbleDrag.previews?.get(t.id):null;
+ return preview?{...t,...preview}:t;
+}
 function desktopBubbleHit(e){
  if(mobileMode||e.pointerType==='touch')return null;
  const svg=$('chart'),p=chartPoint(e);if(!p)return null;
@@ -367,7 +370,7 @@ function desktopBubbleHit(e){
  return best;
 }
 function hoverDesktopBubble(e){
- if(bubbleDrag)return;
+ if(bubbleDrag||selectionDrag)return;
  const hit=desktopBubbleHit(e),svg=$('chart');
  svg.style.cursor=hit?hit.cursor:'';
  if(hit)hit.circle.style.cursor=hit.cursor;
@@ -376,10 +379,18 @@ function startBubbleDrag(e){
  const h=desktopBubbleHit(e);if(!h||e.button!==0)return false;
  const t=tasks.find(t=>t.id===h.id);if(!t)return false;
  closeChartMenu();mapHoldCancel();
- const originals={importance:t.importance,urgency:t.urgency,workload:t.workload};
- bubbleDrag={...h,pointerId:e.pointerId,screenX:e.clientX,screenY:e.clientY,originals,preview:{...originals},moved:false,
-  offset:{x:h.p.x-h.cx,y:h.p.y-h.cy},startDistance:Math.hypot(h.p.x-h.cx,h.p.y-h.cy),
-  radii:new Map(taskRadii(viewportTasks(filtered(),Date.now()),true)),radius:h.r};
+ if(!selectedTaskIds.has(h.id))setSelectedTasks([h.id]);
+ const ids=h.resize?[h.id]:[...selectedTaskIds];
+ const originals=new Map(),previews=new Map();
+ for(const id of ids){
+  const task=tasks.find(v=>v.id===id);if(!task)continue;
+  const state={importance:task.importance,urgency:task.urgency,workload:task.workload};
+  originals.set(id,state);previews.set(id,{...state});
+ }
+ if(!originals.has(h.id))return false;
+ bubbleDrag={...h,pointerId:e.pointerId,screenX:e.clientX,screenY:e.clientY,originals,previews,moved:false,
+  primaryStart:{importance:t.importance,urgency:t.urgency},
+  offset:{x:h.p.x-h.cx,y:h.p.y-h.cy},startDistance:Math.hypot(h.p.x-h.cx,h.p.y-h.cy),radius:h.r};
  $('chart').setPointerCapture(e.pointerId);$('chart').style.cursor=h.cursor;return true;
 }
 function moveBubbleDrag(e){
@@ -390,12 +401,19 @@ function moveBubbleDrag(e){
  $('chart').style.cursor=g.resize?g.cursor:'grabbing';
  if(g.resize){
   const requested=Math.max(minimumBubbleRadius(),g.r+Math.hypot(p.x-g.cx,p.y-g.cy)-g.startDistance);
-  const workload=workloadFromRadius(requested);
-  g.preview.workload=Number(workload.toPrecision(12));
-  g.radius=workloadRadius(g.preview.workload);
+  const workload=workloadFromRadius(requested),preview=g.previews.get(g.id);
+  if(preview)preview.workload=Number(workload.toPrecision(12));
+  g.radius=workloadRadius(workload);
  }else{
   const center={x:Math.max(chartBox.left,Math.min(chartBox.right,p.x-g.offset.x)),y:Math.max(chartBox.top,Math.min(chartBox.bottom,p.y-g.offset.y))};
-  const pos=mapCoordinateAt(center);if(pos)Object.assign(g.preview,pos);
+  const pos=mapCoordinateAt(center);
+  if(pos){
+   const dx=pos.importance-g.primaryStart.importance,dy=pos.urgency-g.primaryStart.urgency;
+   for(const [id,original] of g.originals){
+    const preview=g.previews.get(id);if(!preview)continue;
+    preview.importance=original.importance+dx;preview.urgency=original.urgency+dy;
+   }
+  }
  }
  requestChartRefresh();
 }
@@ -405,13 +423,47 @@ function finishBubbleDrag(commit=true){
  if(svg.hasPointerCapture(g.pointerId))svg.releasePointerCapture(g.pointerId);
  suppressChartClickUntil=Date.now()+600;
  if(commit&&g.moved){
-  const t=tasks.find(t=>t.id===g.id);
-  if(t&&['importance','urgency','workload'].every(k=>t[k]===g.originals[k])){
-   Object.assign(t,g.preview);save();if(g.resize)notify('任务量已调整为 '+t.workload+' 小时。');
+  const unchanged=[...g.originals].every(([id,o])=>{const t=tasks.find(v=>v.id===id);return t&&['importance','urgency','workload'].every(k=>t[k]===o[k]);});
+  if(unchanged){
+   for(const [id,preview] of g.previews){const t=tasks.find(v=>v.id===id);if(t)Object.assign(t,preview);}
+   save();
+   if(g.resize){const t=tasks.find(v=>v.id===g.id);if(t)notify('任务量已调整为 '+t.workload+' 小时。');}
+   else if(g.originals.size>1)notify('已同时移动 '+g.originals.size+' 个日程。');
   }else notify('日程已发生其他修改，本次拖动未保存。');
  }
  renderLinked(Date.now());
  if(commit&&!g.moved)openMobileDetail(g.id);
+}
+function beginSelectionDrag(e,p){
+ const svg=$('chart'),rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+ rect.setAttribute('class','selection-box');rect.setAttribute('x',p.x);rect.setAttribute('y',p.y);rect.setAttribute('width','0');rect.setAttribute('height','0');
+ svg.append(rect);
+ selectionDrag={pointerId:e.pointerId,start:p,current:p,screenX:e.clientX,screenY:e.clientY,moved:false,rect,before:new Set(selectedTaskIds)};
+ svg.setPointerCapture(e.pointerId);svg.style.cursor='crosshair';
+}
+function moveSelectionDrag(e){
+ const g=selectionDrag;if(!g||e.pointerId!==g.pointerId)return;
+ const p=chartPoint(e);if(!p)return;
+ const q={x:Math.max(chartBox.left,Math.min(chartBox.right,p.x)),y:Math.max(chartBox.top,Math.min(chartBox.bottom,p.y))};
+ if(!g.moved&&Math.hypot(e.clientX-g.screenX,e.clientY-g.screenY)<3)return;
+ g.moved=true;g.current=q;suppressChartClickUntil=Date.now()+500;
+ const x=Math.min(g.start.x,q.x),y=Math.min(g.start.y,q.y),w=Math.abs(q.x-g.start.x),h=Math.abs(q.y-g.start.y);
+ g.rect.setAttribute('x',x);g.rect.setAttribute('y',y);g.rect.setAttribute('width',w);g.rect.setAttribute('height',h);
+ const ids=[];
+ for(const circle of $('chart').querySelectorAll('.bubble')){
+  const cx=Number(circle.getAttribute('cx')),cy=Number(circle.getAttribute('cy'));
+  if(cx>=x&&cx<=x+w&&cy>=y&&cy<=y+h)ids.push(circle.dataset.edit);
+ }
+ selectedTaskIds=new Set(ids);pinnedTaskId=null;selectedTaskId=null;highlightSelection();
+}
+function finishSelectionDrag(commit=true){
+ const g=selectionDrag;if(!g)return;
+ selectionDrag=null;const svg=$('chart');g.rect?.remove();svg.style.cursor='';
+ if(svg.hasPointerCapture(g.pointerId))svg.releasePointerCapture(g.pointerId);
+ if(!commit)selectedTaskIds=new Set(g.before);
+ else if(!g.moved)selectedTaskIds.clear();
+ selectedTaskId=null;pinnedTaskId=null;highlightSelection();requestLinks();
+ if(g.moved)suppressChartClickUntil=Date.now()+500;
 }
 
 function installChartInteraction(){
