@@ -906,6 +906,47 @@ async function estimateEditorAIByMedian(field,current,references,compare,diagnos
  return estimate;
 }
 
+async function adjustTaskWithAI(id){
+ const task=tasks.find(t=>t.id===id);if(!task)return;
+ closeChartMenu();
+ const settings=aiSettings();if(!settings.base||!settings.model||!settings.key){notify('请先在 AI 助手中保存 API 设置。');return;}
+ const snapshot=JSON.stringify(task),references=tasks.filter(t=>t.id!==id).map(t=>({...t})),controller=new AbortController(),current={title:task.title,details:task.details,category:task.category,deadline:task.deadline,done:task.done,difficulty:task.difficulty,importance:task.importance,workload:task.workload};
+ const ensureCurrent=()=>{const latest=tasks.find(t=>t.id===id);if(!latest||JSON.stringify(latest)!==snapshot)throw Error('日程已变化，请重新执行 AI 调整。');};
+ const compare=async(field,currentTask,reference,round,count)=>{
+  ensureCurrent();notify('AI 正在比较'+editorAILabels[field]+'…');
+  const raw=await editorAIRequest(settings,controller,[
+   {role:'system',content:'你是日程比较助手。只比较当前日程与参照日程的指定属性，不估计具体数值。重要性按长期目标、交付影响、依赖关系和后果比较，不把截止临近等同于重要；任务量按完成任务所需的实际总工时比较。参照日程的现有数值是用户标定。只返回 JSON 对象 {"relation":"greater|less|equal|unknown"}。'},
+   {role:'user',content:aiTimeContext()+'\n'+JSON.stringify({field,current:currentTask,reference})}
+  ]);
+  let parsed;try{parsed=JSON.parse(raw);}catch{throw Error('AI 比较结果格式无效。');}
+  return parsed?.relation;
+ };
+ const finalize=async(field,currentTask,lowerReference,upperReference,lower,upper)=>{
+  ensureCurrent();
+  const raw=await editorAIRequest(settings,controller,[
+   {role:'system',content:'你是日程属性区间估计助手。已知当前日程的真实属性位于用户标定的下界和上界之间。综合当前日程、上下界日程的题目、细节、类别和已知字段，判断当前任务更接近哪一侧并给出具体数值。重要性按长期目标、交付影响、依赖关系和后果判断；任务量按实际总工时判断。不得超出给定区间。只返回 JSON {"value":数字}。'},
+   {role:'user',content:aiTimeContext()+'\n'+JSON.stringify({field,current:currentTask,lower:{task:lowerReference,value:lower},upper:{task:upperReference,value:upper}})}
+  ]);
+  let parsed;try{parsed=JSON.parse(raw);}catch{throw Error('AI 上下界综合结果格式无效。');}
+  const v=Number(parsed?.value);if(!Number.isFinite(v))throw Error('AI 上下界综合结果缺少有效数值。');return v;
+ };
+ try{
+  notify('AI 正在调整日程…');
+  const importance=await estimateEditorAIByMedian('importance',current,references,compare,{},finalize);
+  const workload=await estimateEditorAIByMedian('workload',current,references,compare,{},finalize);
+  ensureCurrent();
+  const difficultyRaw=await editorAIRequest(settings,controller,[
+   {role:'system',content:'你是日程难度评估助手。根据当前日程的题目、细节、类别以及任务性质，重新评估完成该任务所需的技术/认知难度。difficulty 必须是 1 到 10 的整数，1 最简单，10 最困难。不要根据截止日期或重要性抬高难度。只返回 JSON {"difficulty":整数}。'},
+   {role:'user',content:aiTimeContext()+'\n'+JSON.stringify({task:current})}
+  ]);
+  let parsed;try{parsed=JSON.parse(difficultyRaw);}catch{throw Error('AI 难度结果格式无效。');}
+  const difficulty=Number(parsed?.difficulty);
+  if(importance===null||workload===null||!Number.isInteger(difficulty)||difficulty<1||difficulty>10)throw Error('AI 未能得到完整的有效调整结果。');
+  ensureCurrent();
+  const latest=tasks.find(t=>t.id===id);latest.importance=importance;latest.workload=workload;latest.difficulty=difficulty;save();render();
+  notify('AI 调整完成：重要性 '+importance+'，困难度 '+difficulty+'，任务量 '+workload+' 小时。');
+ }catch(e){notify('AI 调整失败：'+e.message);}
+}
 async function runEditorAI(target=null){
  if(editorAIController)return;
  const text=$('editorAIText').value.trim();if(!target&&!text){$('editorAIStatus').textContent='请先输入一段任务描述。';return;}
