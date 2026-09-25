@@ -829,19 +829,25 @@ function applyEditorAIResult(result,before){
  return changed;
 }
 
+function editorAIReferenceTask(t){
+ return {title:t.title,details:t.details,category:t.category,importance:t.importance,difficulty:t.difficulty,workload:t.workload,deadline:t.deadline,done:t.done};
+}
 async function editorAIRequest(settings,controller,messages){
- const response=await fetch(settings.base.replace(/\/$/,'')+'/chat/completions',{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json','Authorization':'Bearer '+settings.key},body:JSON.stringify({model:settings.model,temperature:.15,max_tokens:1800,messages})});
+ const response=await fetch(settings.base.replace(/\/$/,'')+'/chat/completions',{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json','Authorization':'Bearer '+settings.key},body:JSON.stringify({model:settings.model,temperature:.1,max_tokens:8192,messages})});
  if(!response.ok)throw Error('HTTP '+response.status+'，请检查 API 设置或额度。');
- const data=await response.json(),choice=data.choices?.[0];
- if(choice?.finish_reason==='length')throw Error('AI 输出被截断，未修改表单。');
- if(typeof choice?.message?.content!=='string')throw Error('AI 未返回可用文本。');
- return cleanAIJson(choice.message.content);
+ const data=await response.json(),choice=data.choices?.[0],content=choice?.message?.content;
+ if(typeof content!=='string'||!content.trim())throw Error(choice?.finish_reason==='length'?'AI 推理占用了全部输出预算，未生成最终 JSON。':'AI 未返回可用文本。');
+ const cleaned=cleanAIJson(content);
+ if(choice?.finish_reason==='length'){
+  try{JSON.parse(cleaned);}catch{throw Error('AI 输出被截断且最终 JSON 不完整，请重试。');}
+ }
+ return cleaned;
 }
 async function adjustTaskWithAI(id){
  const task=tasks.find(t=>t.id===id);if(!task)return;
  closeChartMenu();
  const settings=aiSettings();if(!settings.base||!settings.model||!settings.key){notify('请先在 AI 助手中保存 API 设置。');return;}
- const snapshot=JSON.stringify(task),references=tasks.filter(t=>t.id!==id).map(t=>({...t})),controller=new AbortController();
+ const snapshot=JSON.stringify(task),references=tasks.filter(t=>t.id!==id).map(editorAIReferenceTask),controller=new AbortController();
  try{
   notify('AI 正在结合全部日程调整…');
   const raw=await editorAIRequest(settings,controller,[
@@ -865,7 +871,7 @@ async function runEditorAI(){
  const settings=aiSettings();if(!settings.base||!settings.model||!settings.key){$('editorAIStatus').textContent='请在右上角 AI 助手中保存 API 设置后再试。';return;}
  const epoch=++editorAIEpoch,controller=new AbortController();editorAIController=controller;
  $('editorAIParse').disabled=true;$('editorAICancel').hidden=false;$('editorAIStatus').textContent='正在结合全部日程估计…';
- const currentId=$('taskId').value,references=tasks.filter(t=>t.id!==currentId).map(t=>({...t})),referenceSignature=JSON.stringify(references);
+ const currentId=$('taskId').value,references=tasks.filter(t=>t.id!==currentId).map(editorAIReferenceTask),referenceSignature=JSON.stringify(tasks.filter(t=>t.id!==currentId));
  const ensureCurrent=()=>{
   if(controller.signal.aborted||epoch!==editorAIEpoch||!$('editor').open)throw Error('请求已停止。');
   if(JSON.stringify(editorAIValues())!==JSON.stringify(before)||$('editorAIText').value.trim()!==text||JSON.stringify(tasks.filter(t=>t.id!==currentId))!==referenceSignature)throw Error('输入信息或参照日程已变化，请重新解析。');
