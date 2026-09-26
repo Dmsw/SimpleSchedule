@@ -1,0 +1,42 @@
+const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),path=require('path');
+const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
+const moduleCode=html.slice(html.indexOf('let taskConnectionSource='),html.indexOf('function validate('));
+function setup(){
+ const nodes=new Map(),windowHandlers={};
+ function node(id){if(nodes.has(id))return nodes.get(id);const n={id,hidden:true,disabled:false,attrs:{},handlers:{},dataset:{},style:{},classList:{add(){},remove(){}},setAttribute(k,v){this.attrs[k]=v},getAttribute(k){return this.attrs[k]},querySelectorAll(){return[]},contains(el){return el===this},focus(){},remove(){nodes.delete(this.id)},append(el){nodes.set(el.id,el)},addEventListener(type,f,capture){(this.handlers[type]??=[]).push({f,capture})},setPointerCapture(id){this.capture=id},hasPointerCapture(id){return this.capture===id},releasePointerCapture(){this.capture=null}};nodes.set(id,n);return n;}
+ const c={console,Date,Math,Number,Map,Set,JSON,Object,Error,tasks:[],storageBlocked:false,chartMenuAITaskId:'a',suppressChartClickUntil:0,document:{createElementNS:()=>node('temporary'),elementFromPoint:()=>({closest:()=>({dataset:{edit:'b'}})})},window:{addEventListener(t,f){(windowHandlers[t]??=[]).push(f)}},$:node,coordinates:t=>[t.importance,t.day],filtered:()=>c.tasks,insideViewport:()=>true,updateChartMenuAvailability(){},closeChartMenu(){},mapHoldCancel(){},focusTask(){},chartPoint:e=>({x:e.clientX,y:e.clientY}),notify:(msg,undo)=>{c.message=msg;c.undo=undo},save(){c.saved=JSON.stringify({app:'FocusSchedule',version:6,tasks:c.tasks})},render(){c.renders++},renders:0,clampImportance:v=>Math.max(-10,Math.min(10,v))};
+ vm.createContext(c);vm.runInContext(moduleCode,c);
+ for(const name of ['validate','unpack'])vm.runInContext(html.split('\n').find(l=>l.startsWith('function '+name+'(')),c);
+ c.tasks=['a','b','c'].map((id,i)=>({id,title:id,details:'',category:'工作',importance:i*100,day:0,workload:1,deadline:'2026-09-26T00:00:00Z',done:false,difficulty:5,detailsMode:'text'}));
+ c.installTaskConnections();
+ c.fire=(type,e={})=>{let stopped=false;const event={button:0,pointerId:1,clientX:100,clientY:100,target:node('chart'),preventDefault(){},stopImmediatePropagation(){stopped=true},...e};for(const h of node('chart').handlers[type]||[]){h.f(event);if(stopped)break;}return stopped;};
+ return c;
+}
+let c=setup();
+const circle={dataset:{edit:'a'},getAttribute:k=>({cx:'10',cy:'20',r:'12'})[k]};
+c.$('chart').querySelectorAll=()=>[circle];
+c.beginTaskConnection();
+assert.equal(c.$('taskConnectionPreview').attrs.x1,'22');
+c.fire('pointermove',{clientX:110,clientY:20});
+assert.equal(c.$('taskConnectionPreview').attrs.x2,'110');
+assert.equal(c.$('connectionHint').hidden,false);
+assert(c.fire('pointerdown'));assert(c.fire('pointerup'));
+assert.equal(c.tasks[0].connections[0],'b');assert.equal(c.tasks[1].connections[0],'a');assert.equal(c.$('connectionHint').hidden,true);assert.equal(c.renders,1);
+let saved=c.unpack(JSON.parse(c.saved));assert.equal(saved[0].connections[0],'b');
+for(const version of [1,2,4,5,6])assert.equal(c.unpack({app:'FocusSchedule',version,tasks:JSON.parse(JSON.stringify(c.tasks))}).length,3);
+assert.throws(()=>c.validate([{...c.tasks[0],connections:[42]}]));assert.throws(()=>c.validate([{...c.tasks[0],connections:'b'}]));
+assert.deepEqual(Array.from(c.normalizeTaskConnections(['a','b','b'],'a')),['b']);
+const radii=new Map([['a',10],['b',20],['c',10]]);
+let lines=c.taskConnectionLines(c.tasks,x=>x,y=>y,radii);assert.equal((lines.match(/class="task-connection"/g)||[]).length,1);assert(lines.includes('x1="10"'));assert(lines.includes('x2="80"'));assert(lines.includes('stroke="#000"'));
+assert.equal(c.taskConnectionLines([c.tasks[0]],x=>x,y=>y,radii),'');
+assert.equal(c.connectionSegment({x:0,y:0},{x:5,y:0},10,10),null);
+const undo=c.undo;c.beginTaskConnection();c.completeTaskConnection('a');assert(c.message.includes('另一个'));c.completeTaskConnection('b');assert(c.message.includes('已经连接'));assert.equal(c.tasks[0].connections.length,1);c.cancelTaskConnection();undo();assert.equal(c.tasks[0].connections.length,0);
+c.beginTaskConnection();c.completeTaskConnection('b');const b=c.tasks.splice(1,1)[0];assert.equal(c.taskConnectionLines(c.tasks,x=>x,y=>y,radii),'');c.tasks.push(b);assert(c.taskConnectionLines(c.tasks,x=>x,y=>y,radii).includes('task-connection'));
+c=setup();c.beginTaskConnection();c.fire('keydown',{key:'Escape'});assert.equal(c.$('connectionHint').hidden,true);assert(!c.saved);
+c.beginTaskConnection();c.fire('pointerdown');c.fire('pointerup',{clientX:200});assert(!c.saved);c.fire('pointercancel');assert.equal(c.$('connectionHint').hidden,true);
+c.beginTaskConnection();c.tasks=c.tasks.filter(t=>t.id!=='a');c.completeTaskConnection('b');assert(!c.saved);assert.equal(c.$('connectionHint').hidden,true);
+c=setup();c.beginTaskConnection();c.storageBlocked=true;c.completeTaskConnection('b');assert(!c.saved);
+c=setup();c.beginTaskConnection();c.fire('keydown',{key:'Enter',target:{closest:()=>({dataset:{edit:'c'}})}});assert.equal(c.tasks[0].connections[0],'c');
+assert(html.includes('t.connections=[...(tasks[i].connections||[])]'));
+assert(html.indexOf('installTaskConnections();installLinks();installChartInteraction();')>0);
+console.log('PASS connection state, pointer/keyboard completion, cancel, deduplication, SVG geometry, save/load/export schema, legacy import, delete/undo and edit preservation');
