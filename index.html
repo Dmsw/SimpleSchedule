@@ -5,7 +5,7 @@
 
 .md{line-height:1.75;overflow-wrap:anywhere}.md h1,.md h2,.md h3{margin:16px 0 8px;font-size:1.25em}.md p{margin:8px 0}.md pre{background:#edf1f5;padding:12px;border-radius:8px;overflow:auto;white-space:pre}.md code{font-family:Consolas,monospace;background:#edf1f5;padding:2px 4px;border-radius:4px}.md pre code{padding:0}.md blockquote{margin:10px 0;border-left:3px solid #94b8aa;padding:4px 12px;color:#687587}.md table{min-width:0;width:auto;display:block;overflow:auto}.md th,.md td{padding:6px 10px;border:1px solid #dbe0e6}.md a{color:#286c59}.md img{max-width:100%}.md ul,.md ol{padding-left:24px}.md hr{border:0;border-top:1px solid #dbe0e6}.detailscell{max-width:340px}.detailscell summary{cursor:pointer;font-size:12px;color:#687587}.detailsfull{max-height:260px;overflow:auto;font-size:13px;white-space:pre-wrap;margin-top:8px}.detailsfull.md{white-space:normal}.details-tools{display:flex;justify-content:space-between;align-items:center;gap:8px}.details-tools button{font-size:12px;padding:5px 10px}#markdownPreview{min-height:130px;max-height:330px;overflow:auto;padding:12px;border:1px solid #d6dce4;border-radius:8px;background:#fbfcfd}#taskDetails{min-height:170px}.difficulty{font-weight:600;white-space:nowrap}.difficulty i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px}.chart-controls{padding:14px 22px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.difficulty-legend{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.legend{padding-left:0}.md-tip{font-size:12px;color:#687587}dialog{width:min(660px,94vw)}
 
-#chartMenu{position:fixed;z-index:20;width:240px;background:white;border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 10px 40px #182b3b33}#chartMenuTitle{font-size:13px;font-weight:600;padding:7px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#chartMenu button{display:block;width:100%;text-align:left;border:0;padding:9px}#chartMenu .menuhint{padding:5px 9px;font-size:11px;color:var(--muted)}
+#chartMenu{position:fixed;z-index:20;width:240px;background:white;border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 10px 40px #182b3b33}#chartMenu button{display:block;width:100%;text-align:left;border:0;padding:9px}#chartMenu button:disabled{opacity:.4;cursor:not-allowed}#chartMenu .menuhint{padding:5px 9px;font-size:11px;color:var(--muted)}
 
 main{max-width:1760px}.linked-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(360px,1fr);gap:20px;align-items:start}.chart-panel{position:sticky;top:16px}.chartwrap svg{min-width:0;width:100%;touch-action:none;user-select:none;cursor:crosshair}.chartwrap svg.dragging,.chartwrap svg.dragging .bubble{cursor:grabbing}.chartwrap{padding:10px 12px}.chart-controls{padding:14px 16px 0}.chart-controls select{max-width:100%}.legend{gap:10px;font-size:12px}.task-list{max-height:850px;overflow:auto;overscroll-behavior:contain}.taskcard{padding:16px 20px;border-top:1px solid var(--line)}.taskcard:first-child{border-top:0}.taskcard-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:4px}.taskcard .titlebtn{max-width:none;font-size:16px}.taskcard .detailscell{max-width:none;margin:10px 0}.taskcard .detailsfull{max-height:240px}.taskcard .countdown{margin:4px 0}.task-metrics{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin:8px 0}.outside-card{background:#fafbfc}.rowactions{flex-wrap:wrap}.list-tools{padding:14px 18px 6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.list-order{padding:0 18px 12px}.range-settings{margin:14px 16px 0;font-size:12px;color:var(--muted)}.range-settings summary{cursor:pointer}.range-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.range-pair{display:flex;align-items:center;gap:6px;margin-top:4px}.range-pair input{width:100%;min-width:0;padding:7px}.range-settings button{font-size:12px}.list-panel .empty{padding:40px 20px}.note{padding:12px 16px}@media(max-width:1099px){.linked-layout{grid-template-columns:minmax(0,1fr)}.chart-panel{position:static}.task-list{max-height:none}}@media(max-width:540px){main{padding:10px}.chart-controls{gap:6px}.chart-controls button{font-size:12px;padding:7px 9px}.chart-controls select{font-size:12px}.range-grid{grid-template-columns:1fr}.panelhead{padding:14px}.chartwrap{padding:8px 2px}.legend{padding:8px;gap:7px}.taskcard{padding:14px}.note{font-size:11px}}
 
@@ -62,11 +62,11 @@ body.mobile-mode .twocol{grid-template-columns:1fr}
 <div class="chartwrap"><svg id="chart" viewBox="0 0 880 510" tabindex="0" role="group" aria-label="联动任务图表"></svg><div id="legend" class="legend"></div></div><div id="chartNote" class="note"></div></section>
 <section class="panel list-panel" id="listView" hidden><div class="panelhead"><b>日程清单</b><span class="small" id="resultCount"></span></div><div class="list-tools"><label for="listScope">显示范围</label><select id="listScope"><option value="visible">仅图表范围内</option><option value="outside">仅范围外</option><option value="all">全部任务</option></select><span id="hiddenCount" class="small"></span></div><div class="small list-order">遵循顶部排序设置，默认最早截止优先。类别、搜索及状态筛选对两侧同时生效。</div><div id="rows" class="task-list"></div><div id="empty" class="empty" hidden></div></section></div>
 <footer><span id="saveStatus" role="status">本地自动保存 · 无需联网</span><span>建议定期导出备份，换浏览器或移动文件前先备份。</span><span>Powered by: <a href="https://github.com/Dmsw/SimpleSchedule" target="_blank" rel="noopener noreferrer">Dmsw/SimpleSchedule.git</a></span></footer></main>
-<dialog id="editor"><form id="taskForm"><div class="dialoghead"><h2 id="editorTitle">新建日程</h2><button type="button" id="closeEditor" aria-label="关闭">✕</button></div><div class="formbody"><input type="hidden" id="taskId"><details id="editorAIEntry" class="field"><summary>✦ AI解析</summary><textarea id="editorAIText" maxlength="10000" placeholder="粘贴一段任务描述，AI 会结合全部已有日程，一次性填入能确定的信息；不确定的字段保持不变。"></textarea><div class="actions"><button type="button" id="editorAIParse">解析并填入</button><button type="button" id="editorAISettings">API 设置</button></div></details><div class="small" id="editorAIStatus" role="status"></div><div class="actions"><button type="button" id="editorAIUndo" hidden>撤销 AI 填入</button><button type="button" id="editorAICancel" hidden>停止</button></div><div class="field"><label for="taskTitle">题目 *</label><input id="taskTitle" maxlength="160" required placeholder="例如：完成论文实验分析"></div><div class="field"><div class="details-tools"><label for="taskDetails">细节</label><div class="tabs"><button type="button" id="textMode" class="active" aria-pressed="true">纯文本编辑</button><button type="button" id="markdownMode" aria-pressed="false">Markdown 预览</button></div></div><textarea id="taskDetails" maxlength="10000" placeholder="可以直接输入纯文本，也支持 Markdown：&#10;## 目标&#10;- [ ] 完成实验&#10;- **重点**：整理结果"></textarea><div id="markdownPreview" class="md" hidden></div><div class="md-tip">支持标题、粗体、列表、任务清单、引用、代码块、表格和链接。切换显示不改变原文。</div></div><div class="twocol"><div class="field"><label for="taskCategory">类别 *</label><input id="taskCategory" list="categories" maxlength="40" required placeholder="科研 / 工作 / 生活"><datalist id="categories"><option value="科研"><option value="工作"><option value="生活"><option value="学习"></datalist></div><div class="field"><label for="taskWorkload">工作量 *</label><input id="taskWorkload" type="number" min="0.1" max="100000" step="0.1" value="1" required></div></div><div class="field"><label for="taskDeadline">截止时间（本地时区）*</label><input id="taskDeadline" type="datetime-local" required></div><div class="field"><label for="taskImportance">重要性 · 任意正负小数</label><div class="rangebox"><input id="taskImportance" type="number" step="any" value="0" required><output id="importanceValue" for="taskImportance" hidden>0</output></div></div><div class="field"><label for="taskDifficulty">困难度 · 1 最容易 / 10 最困难</label><div class="rangebox"><input id="taskDifficulty" type="range" min="1" max="10" value="5"><output id="difficultyValue" for="taskDifficulty">5</output></div></div><label><input id="taskDone" type="checkbox"> 已完成</label></div><div class="formfoot"><button type="button" id="cancelEditor">取消</button><button class="primary" type="submit">保存日程</button></div></form></dialog>
+<dialog id="editor"><form id="taskForm"><div class="dialoghead"><h2 id="editorTitle">新建日程</h2><button type="button" id="closeEditor" aria-label="关闭">✕</button></div><div class="formbody"><input type="hidden" id="taskId"><details id="editorAIEntry" class="field"><summary>✦ AI解析</summary><textarea id="editorAIText" maxlength="10000" placeholder="粘贴一段任务描述，AI 会结合全部已有日程，一次性填入能确定的信息；不确定的字段保持不变。"></textarea><div class="actions"><button type="button" id="editorAIParse">解析并填入</button><button type="button" id="editorAISettings">API 设置</button></div></details><div class="small" id="editorAIStatus" role="status"></div><div class="actions"><button type="button" id="editorAIUndo" hidden>撤销 AI 填入</button><button type="button" id="editorAICancel" hidden>停止</button></div><div class="field"><label for="taskTitle">题目 *</label><input id="taskTitle" maxlength="160" required placeholder="例如：完成论文实验分析"></div><div class="field"><div class="details-tools"><label for="taskDetails">细节</label><div class="tabs"><button type="button" id="textMode" class="active" aria-pressed="true">纯文本编辑</button><button type="button" id="markdownMode" aria-pressed="false">Markdown 预览</button></div></div><textarea id="taskDetails" maxlength="10000" placeholder="可以直接输入纯文本，也支持 Markdown：&#10;## 目标&#10;- [ ] 完成实验&#10;- **重点**：整理结果"></textarea><div id="markdownPreview" class="md" hidden></div><div class="md-tip">支持标题、粗体、列表、任务清单、引用、代码块、表格和链接。切换显示不改变原文。</div></div><div class="twocol"><div class="field"><label for="taskCategory">类别 *</label><input id="taskCategory" list="categories" maxlength="40" required placeholder="科研 / 工作 / 生活"><datalist id="categories"><option value="科研"><option value="工作"><option value="生活"><option value="学习"></datalist></div><div class="field"><label for="taskWorkload">工作量 *</label><input id="taskWorkload" type="number" min="0.1" max="100000" step="0.1" value="1" required></div></div><div class="field"><label for="taskDeadline">截止时间（本地时区）*</label><input id="taskDeadline" type="datetime-local" required></div><div class="field"><label for="taskImportance">重要性 · −10～10</label><div class="rangebox"><input id="taskImportance" type="range" min="-10" max="10" step="0.1" value="0" required><output id="importanceValue" for="taskImportance">0</output></div></div><div class="field"><label for="taskDifficulty">困难度 · 1 最容易 / 10 最困难</label><div class="rangebox"><input id="taskDifficulty" type="range" min="1" max="10" value="5"><output id="difficultyValue" for="taskDifficulty">5</output></div></div><label><input id="taskDone" type="checkbox"> 已完成</label></div><div class="formfoot"><button type="button" id="cancelEditor">取消</button><button class="primary" type="submit">保存日程</button></div></form></dialog>
 <dialog id="mobileDetail" aria-labelledby="mobileDetailTitle"><div class="dialoghead"><h2 id="mobileDetailTitle"></h2><button id="mobileDetailClose" aria-label="关闭详情">✕</button></div><div class="formbody"><p id="mobileDetailMeta"></p><p id="mobileDetailDate" class="small"></p><p id="mobileDetailCountdown"></p><div id="mobileDetailBody" class="md"></div></div><div class="formfoot"><button id="mobileEdit">编辑</button><button id="mobileComplete" class="primary">标记完成</button><button id="mobileDelete" class="danger">删除</button></div></dialog>
-<dialog id="help"><div class="dialoghead"><h2>使用说明</h2><button id="closeHelp" aria-label="关闭说明">✕</button></div><div class="helpbody"><p><b>开始使用：</b>将此 HTML 文件保存在固定文件夹，使用 Windows 上的 Edge 或 Chrome 打开。无需安装 Python，无需网络。</p><p><b>四个属性：</b>重要性为任意正负小数；截止时间直接决定地图纵轴位置；困难度为 1–10 级；工作量使用数值表示，支持小数。</p><p><b>Markdown：</b>在纯文本编辑框输入内容，点击“Markdown 预览”查看排版，随时切回编辑。保存时保留显示模式，点击地图上的标题标签可阅读全文。支持常用 Markdown（标题、列表、任务清单、引用、代码、表格、链接）。原始 HTML 仅作为文字显示；远程图片只显示说明与链接。</p><p><b>地图：</b>仅提供重要性 × 截止日期视图，越早截止的任务越靠上；纵轴刻度最小间隔为 1 天。圆圈大小按固定坐标比例表示工作量，并随地图缩放；重要性 0 与今天将背景划分为四个区域，圆圈颜色表示困难度。电脑端左键拖动空白区域进行框选，框中的多个圆可同时选中；拖动任一已选圆内部可整体平移选中圆，其中纵向移动按整天调整截止日期；按住圆圈边界并上下移动鼠标调整半径，松开后确认并退出，多选时所有已选圆同步缩放；按住 Ctrl 时光标变为抓取手势，左键拖动可平移整个视图。滚轮默认上下移动视图，Shift + 滚轮左右移动，Ctrl + 滚轮以鼠标位置为中心缩放。右键地图（手机长按）按所在重要性和日期创建日程。</p><p><b>本地保存：</b>每次修改自动保存到当前浏览器的 localStorage。请固定使用同一浏览器、同一文件位置，并避免无痕模式。清除浏览器数据、移动或重命名文件后，数据可能无法继续读取。</p><p><b>备份迁移：</b>点击“导出备份”下载 JSON 文件。导入采用合并方式；相同 ID 的日程以备份内容更新，其余保留。删除前会确认，删除后短时间内可撤销。支持导入旧版备份；旧版中的迫切性字段会被忽略，重要性和截止时间继续保留；版本 1 日程困难度默认为 5，细节默认为纯文本。</p><p>数据不发送到服务器。本软件没有后台通知功能，关闭页面后不会弹出提醒。</p></div></dialog>
+<dialog id="help"><div class="dialoghead"><h2>使用说明</h2><button id="closeHelp" aria-label="关闭说明">✕</button></div><div class="helpbody"><p><b>开始使用：</b>将此 HTML 文件保存在固定文件夹，使用 Windows 上的 Edge 或 Chrome 打开。无需安装 Python，无需网络。</p><p><b>四个属性：</b>重要性为 −10～10 的数值；截止时间直接决定地图纵轴位置；困难度为 1–10 级；工作量使用数值表示，支持小数。</p><p><b>Markdown：</b>在纯文本编辑框输入内容，点击“Markdown 预览”查看排版，随时切回编辑。保存时保留显示模式，点击地图上的标题标签可阅读全文。支持常用 Markdown（标题、列表、任务清单、引用、代码、表格、链接）。原始 HTML 仅作为文字显示；远程图片只显示说明与链接。</p><p><b>地图：</b>仅提供重要性 × 截止日期视图，越早截止的任务越靠上；纵轴刻度最小间隔为 1 天。圆圈半径按当前视图内工作量平方根归一化为 10～42；只有一个日程或工作量相同时半径为 24。拖动边缘时暂时固定显示比例，松开后重新归一化；重要性 0 与今天将背景划分为四个区域，圆圈颜色表示困难度。电脑端左键拖动空白区域进行框选，框中的多个圆可同时选中；拖动任一已选圆内部可整体平移选中圆，其中纵向移动按整天调整截止日期；按住圆圈边界并上下移动鼠标调整半径，松开后确认并退出，多选时所有已选圆同步缩放；按住 Ctrl 时光标变为抓取手势，左键拖动可平移整个视图。滚轮默认上下移动视图，Shift + 滚轮左右移动，Ctrl + 滚轮以鼠标位置为中心缩放。右键地图（手机长按）按所在重要性和日期创建日程。</p><p><b>本地保存：</b>每次修改自动保存到当前浏览器的 localStorage。请固定使用同一浏览器、同一文件位置，并避免无痕模式。清除浏览器数据、移动或重命名文件后，数据可能无法继续读取。</p><p><b>备份迁移：</b>点击“导出备份”下载 JSON 文件。导入采用合并方式；相同 ID 的日程以备份内容更新，其余保留。删除前会确认，删除后短时间内可撤销。支持导入旧版备份；旧版中的迫切性字段会被忽略，重要性和截止时间继续保留；版本 1 日程困难度默认为 5，细节默认为纯文本。</p><p>数据不发送到服务器。本软件没有后台通知功能，关闭页面后不会弹出提醒。</p></div></dialog>
 <dialog id="aiDialog"><div class="dialoghead"><h2>✦ AI 助手</h2><button id="closeAi" aria-label="关闭">✕</button></div><div class="formbody"><div class="field"><label>API 设置</label><div class="twocol"><input id="aiBase" placeholder="https://api.minimax.io/v1"><input id="aiModel" placeholder="MiniMax-M2.5"></div><input id="aiKey" type="password" placeholder="API Key（仅保存在本机）"><div class="small">MiniMax 官方 OpenAI 兼容地址：海外通常为 https://api.minimax.io/v1，国内区域请使用控制台提供的地址。浏览器直连可能受 CORS 或网络策略影响。</div></div><div class="actions"><button id="saveAi">保存设置</button><button id="reportAi" class="primary">生成今日汇报</button><button id="planAi">给出今日完成建议</button></div><div class="field"><label for="aiPrompt">向助手提问</label><textarea id="aiPrompt" placeholder="例如：帮我把当前任务拆成三个可执行步骤"></textarea><button id="askAi" class="primary">发送问题</button></div><div id="aiStatus" class="small"></div><div id="aiOutput" class="md" hidden></div></div></dialog>
-<div id="chartMenu" hidden role="menu" aria-label="地图操作"><div id="chartMenuTitle"></div><button id="chartMenuCreate" role="menuitem">创建日程</button><button id="chartMenuAIAdjust" role="menuitem" disabled>✦ AI 调整</button><button id="chartMenuDeleteSelected" class="danger" role="menuitem" disabled>批量删除已选日程</button></div>
+<div id="chartMenu" hidden role="menu" aria-label="地图操作"><button id="chartMenuCreate" role="menuitem">创建日程</button><button id="chartMenuFocus" role="menuitem" disabled>转到此日程</button><button id="chartMenuAIAdjust" role="menuitem" disabled>✦ AI 调整</button><button id="chartMenuDeleteSelected" class="danger" role="menuitem" disabled>批量删除已选日程</button></div>
 <input id="importFile" type="file" accept=".json,application/json" hidden><div id="toast" role="status" hidden></div>
 <!-- Bundled Markdown parser: Marked 17.0.5, MIT license
 # License information
@@ -198,7 +198,7 @@ const difficultyColors=['#27845b','#40915a','#679c54','#91a64b','#b3ad43','#cea3
 const difficultyColor=n=>difficultyColors[n-1]||difficultyColors[4];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2);
-function validate(a,legacy=false){if(!Array.isArray(a)||a.length>20000)throw Error('日程列表无效或超过 20000 条');const ids=new Set();return a.map(t=>{if(legacy&&t&&typeof t==='object')t={...t,difficulty:5,detailsMode:'text'};const draft=t?.draft===true;if(!t||typeof t.id!=='string'||!t.id||t.id.length>150||ids.has(t.id)||typeof t.title!=='string'||(!draft&&!t.title.trim())||t.title.length>160||typeof t.details!=='string'||t.details.length>10000||typeof t.category!=='string'||!t.category.trim()||t.category.length>40||typeof t.importance!=='number'||!Number.isFinite(t.importance)||typeof t.workload!=='number'||!Number.isFinite(t.workload)||t.workload<.1||t.workload>100000||typeof t.deadline!=='string'||!Number.isFinite(Date.parse(t.deadline))||typeof t.done!=='boolean'||!Number.isInteger(t.difficulty)||t.difficulty<1||t.difficulty>10||!['text','markdown'].includes(t.detailsMode))throw Error('存在格式不正确的日程，未导入任何数据');ids.add(t.id);return{id:t.id,title:t.title.trim(),details:t.details,category:t.category.trim(),importance:t.importance,workload:t.workload,deadline:new Date(t.deadline).toISOString(),done:t.done,difficulty:t.difficulty,detailsMode:t.detailsMode,...(draft?{draft:true}:{})};});}
+function validate(a,legacy=false){if(!Array.isArray(a)||a.length>20000)throw Error('日程列表无效或超过 20000 条');const ids=new Set();return a.map(t=>{if(legacy&&t&&typeof t==='object')t={...t,difficulty:5,detailsMode:'text'};const draft=t?.draft===true;if(!t||typeof t.id!=='string'||!t.id||t.id.length>150||ids.has(t.id)||typeof t.title!=='string'||(!draft&&!t.title.trim())||t.title.length>160||typeof t.details!=='string'||t.details.length>10000||typeof t.category!=='string'||!t.category.trim()||t.category.length>40||typeof t.importance!=='number'||!Number.isFinite(t.importance)||typeof t.workload!=='number'||!Number.isFinite(t.workload)||t.workload<.1||t.workload>100000||typeof t.deadline!=='string'||!Number.isFinite(Date.parse(t.deadline))||typeof t.done!=='boolean'||!Number.isInteger(t.difficulty)||t.difficulty<1||t.difficulty>10||!['text','markdown'].includes(t.detailsMode))throw Error('存在格式不正确的日程，未导入任何数据');ids.add(t.id);return{id:t.id,title:t.title.trim(),details:t.details,category:t.category.trim(),importance:clampImportance(t.importance),workload:t.workload,deadline:new Date(t.deadline).toISOString(),done:t.done,difficulty:t.difficulty,detailsMode:t.detailsMode,...(draft?{draft:true}:{})};});}
 function unpack(d){if(!d||d.app!=='FocusSchedule'||![1,2,4,5].includes(d.version)||!Array.isArray(d.tasks))throw Error('不是受支持的日程备份（版本 1、2、4 或 5）');return validate(d.tasks,d.version===1);}
 function load(){try{const raw=localStorage.getItem(KEY);if(raw)tasks=unpack(JSON.parse(raw));}catch(e){storageBlocked=true;$('storageError').hidden=false;$('storageError').textContent='本地数据无法读取：'+e.message+'。为保护原数据，本次不覆盖存储；可导出当前日程后，在正常浏览器环境重新打开。';$('saveStatus').textContent='本地存储不可用，请导出备份';}}
 function save(){if(storageBlocked){notify('本次修改仅在内存中，请导出备份');return;}try{localStorage.setItem(KEY,JSON.stringify({app:'FocusSchedule',version:5,tasks}));$('saveStatus').textContent='已自动保存到本机 · '+new Date().toLocaleTimeString('zh-CN');}catch(e){$('storageError').hidden=false;$('storageError').textContent='自动保存失败（可能空间不足或浏览器限制）。请立即导出备份。';$('saveStatus').textContent='保存失败 · 请导出备份';notify('自动保存失败，请导出备份');}}
@@ -234,7 +234,8 @@ function paddedDateDomain(lo,hi){lo=Math.floor(lo);hi=Math.ceil(hi);if(lo===hi)r
 function insideViewport(t,now){const [x,y]=coordinates(t,now);return x>=viewport.x[0]&&x<=viewport.x[1]&&y>=viewport.y[0]&&y<=viewport.y[1];}
 function viewportTasks(a,now,scope='visible'){return a.filter(t=>scope==='all'||insideViewport(t,now)===(scope==='visible'));}
 function numberLabel(n){return String(Number(n.toPrecision(8)));}
-function limitDomain(axis,range){if(axis!=='y')return [...range];const mid=(range[0]+range[1])/2,span=range[1]-range[0];return span>=1?[...range]:[mid-.5,mid+.5];}
+function clampImportance(v){return Math.max(-10,Math.min(10,v));}
+function limitDomain(axis,range){if(axis==='x'){const span=Math.max(.01,Math.min(22,range[1]-range[0])),mid=range[0]/2+range[1]/2,lo=Math.max(-11,Math.min(11-span,mid-span/2));return [lo,lo+span];}if(axis!=='y')return [...range];const mid=(range[0]+range[1])/2,span=range[1]-range[0];return span>=1?[...range]:[mid-.5,mid+.5];}
 function setViewport(next){if(bubbleDrag)return;if(![...next.x,...next.y].every(Number.isFinite)||next.x[0]>=next.x[1]||next.y[0]>=next.y[1])return;viewport={x:limitDomain('x',next.x),y:limitDomain('y',next.y)};}
 function resetViewport(){if(bubbleDrag)finishBubbleDrag(false);viewport=defaultViewport();renderLinked(Date.now());}
 function fitAllTasks(){const a=filtered();if(!a.length){resetViewport();return;}let xmin=Infinity,xmax=-Infinity,ymin=Infinity,ymax=-Infinity;for(const t of a){const day=localDayIndex(t.deadline);xmin=Math.min(xmin,t.importance);xmax=Math.max(xmax,t.importance);ymin=Math.min(ymin,day);ymax=Math.max(ymax,day);}setViewport({x:paddedDomain(xmin,xmax),y:paddedDateDomain(ymin,ymax)});renderLinked(Date.now());}
@@ -270,7 +271,16 @@ function workloadFromRadius(radius){
  return Math.max(.1,Math.min(100000,referenceRadius*referenceRadius/40));
 }
 function minimumBubbleRadius(){return MIN_BUBBLE_DATA_RADIUS*bubbleCoordinateScale();}
-function taskRadii(visible){return new Map(visible.map(t=>[t.id,workloadRadius(bubblePreview(t).workload)]));}
+function taskRadii(visible){
+ const roots=visible.map(t=>Math.sqrt(bubblePreview(t).workload));
+ let lo=Infinity,hi=-Infinity;for(const v of roots){lo=Math.min(lo,v);hi=Math.max(hi,v);}
+ return new Map(visible.map((t,i)=>{
+  let r=hi>lo?10+32*(roots[i]-lo)/(hi-lo):24;
+  // Freeze the display-to-workload ratio during an edge drag; normalize again on release.
+  if(radiusEdit?.radii.has(t.id))r=radiusEdit.radii.get(t.id)*Math.sqrt(bubblePreview(t).workload/radiusEdit.originals.get(t.id).workload);
+  return [t.id,r];
+ }));
+}
 function requestLinks(){if(!linkFrame)linkFrame=requestAnimationFrame(()=>{linkFrame=0;drawLinks();});}
 function hoveredTaskAt(x,y){
   if(dragState||selectionDrag||bubbleDrag||typeof document.elementFromPoint!=='function')return null;
@@ -402,11 +412,12 @@ function startRadiusEdit(e,h){
  const t=tasks.find(v=>v.id===h.id);if(!t)return false;
  closeChartMenu();mapHoldCancel();
  if(!selectedTaskIds.has(h.id))setSelectedTasks([h.id]);
+ const displayed=taskRadii(viewportTasks(filtered(),Date.now()));
  const ids=[...selectedTaskIds],originals=new Map(),previews=new Map(),radii=new Map();
  for(const id of ids){
   const task=tasks.find(v=>v.id===id);if(!task)continue;
   const state={importance:task.importance,deadline:task.deadline,workload:task.workload};
-  originals.set(id,state);previews.set(id,{...state});radii.set(id,workloadRadius(task.workload));
+  originals.set(id,state);previews.set(id,{...state});radii.set(id,displayed.get(id)||24);
  }
  if(!originals.size)return false;
  radiusEdit={primaryId:h.id,pointerId:e.pointerId,startY:e.clientY,lastY:e.clientY,originals,previews,radii,moved:false};
@@ -422,8 +433,7 @@ function moveRadiusEdit(e){
  const factor=Math.max(.05,Math.min(20,Math.exp(dy*.008)));
  for(const [id,startRadius] of g.radii){
   const preview=g.previews.get(id);if(!preview)continue;
-  const radius=Math.max(minimumBubbleRadius(),startRadius*factor);
-  preview.workload=Number(workloadFromRadius(radius).toPrecision(12));
+  preview.workload=Number(Math.max(.1,Math.min(100000,g.originals.get(id).workload*factor*factor)).toPrecision(12));
  }
  suppressChartClickUntil=Date.now()+600;requestChartRefresh();
 }
@@ -480,7 +490,8 @@ function moveBubbleDrag(e){
    const sx=chartBox.left+axisFraction(snappedImportance,viewport.x)*(chartBox.right-chartBox.left),sy1=chartBox.top+axisFraction(pos.day,viewport.y)*(chartBox.bottom-chartBox.top),sy2=chartBox.top+axisFraction(best.day,viewport.y)*(chartBox.bottom-chartBox.top);
    g.snapGuide={x:sx,y1:Math.min(sy1,sy2),y2:Math.max(sy1,sy2)};
   }else g.snapGuide=null;
-  const dx=snappedImportance-g.primaryStart.importance,dayShift=Math.round(pos.day-g.primaryStart.day);
+  let minImportance=Infinity,maxImportance=-Infinity;for(const original of g.originals.values()){minImportance=Math.min(minImportance,original.importance);maxImportance=Math.max(maxImportance,original.importance);}
+  const dx=Math.max(-10-minImportance,Math.min(10-maxImportance,snappedImportance-g.primaryStart.importance)),dayShift=Math.round(pos.day-g.primaryStart.day);
   for(const [id,original] of g.originals){
    const preview=g.previews.get(id);if(!preview)continue;
    preview.importance=original.importance+dx;
@@ -589,7 +600,7 @@ function installChartInteraction(){
    holdTimer=setTimeout(()=>{
     if(activePointers.size!==1||dragState?.moved)return;
     holdOpened=true;clickTaskId=null;dragState=null;svg.classList.remove('dragging');suppressChartClickUntil=Date.now()+800;
-    openChartCreateMenu(p,e.clientX,e.clientY);
+    openChartCreateMenu(p,e.clientX,e.clientY,e.target.closest('[data-edit]')?.dataset.edit);
    },550);
   }
  });
@@ -649,34 +660,54 @@ function installChartInteraction(){
 }
 function localInput(date){const d=new Date(date);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);}
 function openEditor(id){if(radiusEdit)finishRadiusEdit(false);if(bubbleDrag)finishBubbleDrag(false);const t=tasks.find(t=>t.id===id);resetEditorAI(t);$('taskForm').reset();$('editorTitle').textContent=t?'编辑日程':'新建日程';$('taskId').value=t?.id||'';$('taskTitle').value=t?.title||'';$('taskDetails').value=t?.details||'';$('taskCategory').value=t?.category||'工作';$('taskWorkload').value=t?.workload||1;$('taskDeadline').value=localInput(t?.deadline||Date.now()+DAY);$('taskImportance').value=t?.importance??0;$('importanceValue').value=$('taskImportance').value;$('taskDone').checked=t?.done||false;$('taskDifficulty').value=t?.difficulty||5;updateDifficulty();setDetailsMode(t?.detailsMode||'text');$('editor').showModal();$('taskTitle').focus();}
-$('taskForm').onsubmit=e=>{e.preventDefault();const title=$('taskTitle').value.trim(),category=$('taskCategory').value.trim();if(!title||!category){notify('题目和类别不能仅包含空格');return;}const date=new Date($('taskDeadline').value);if(!Number.isFinite(date.getTime())){notify('请填写有效的截止时间');return;}const t={id:$('taskId').value||uid(),title,details:$('taskDetails').value,category,importance:Number($('taskImportance').value),workload:Number($('taskWorkload').value),deadline:date.toISOString(),done:$('taskDone').checked,difficulty:Number($('taskDifficulty').value),detailsMode};try{validate([t]);}catch(e){notify(e.message);return;}const i=tasks.findIndex(v=>v.id===t.id);if(i<0)tasks.push(t);else tasks[i]=t;save();$('editor').close();render();};
+$('taskForm').onsubmit=e=>{e.preventDefault();const title=$('taskTitle').value.trim(),category=$('taskCategory').value.trim();if(!title||!category){notify('题目和类别不能仅包含空格');return;}const date=new Date($('taskDeadline').value);if(!Number.isFinite(date.getTime())){notify('请填写有效的截止时间');return;}const t={id:$('taskId').value||uid(),title,details:$('taskDetails').value,category,importance:Number($('taskImportance').value),workload:Number($('taskWorkload').value),deadline:date.toISOString(),done:$('taskDone').checked,difficulty:Number($('taskDifficulty').value),detailsMode};try{validate([t]);if(t.importance<-10||t.importance>10)throw Error('重要性必须在 −10～10 之间');}catch(e){notify(e.message);return;}const i=tasks.findIndex(v=>v.id===t.id);if(i<0)tasks.push(t);else tasks[i]=t;save();$('editor').close();render();};
 $('taskImportance').oninput=()=>$('importanceValue').value=$('taskImportance').value;$('newBtn').onclick=()=>openEditor();$('closeEditor').onclick=$('cancelEditor').onclick=()=>$('editor').close();$('helpBtn').onclick=()=>$('help').showModal();$('closeHelp').onclick=()=>$('help').close();
 
-let chartMenuId=null,chartCreatePoint=null,chartMenuDeleteIds=[],chartMenuAITaskId=null,mapHoldCancel=()=>{};
-function closeChartMenu(restore=false){$('chartMenu').hidden=true;chartCreatePoint=null;chartMenuId=null;chartMenuDeleteIds=[];chartMenuAITaskId=null;if(restore)$('chart').focus();}
+let chartMenuId=null,chartCreatePoint=null,chartMenuDeleteIds=[],chartMenuAITaskId=null,chartMenuFocusId=null,chartAIAdjustBusy=false,mapHoldCancel=()=>{};
+function closeChartMenu(restore=false){$('chartMenu').hidden=true;chartCreatePoint=null;chartMenuId=null;chartMenuDeleteIds=[];chartMenuAITaskId=null;chartMenuFocusId=null;if(restore)$('chart').focus();}
 function mapCoordinateAt(p){
  if(!onPlot(p))return null;
  const fx=(p.x-chartBox.left)/(chartBox.right-chartBox.left),fy=(p.y-chartBox.top)/(chartBox.bottom-chartBox.top);
- const importance=axisValue(viewport.x,fx),day=Math.round(axisValue(viewport.y,fy));
+ const importance=clampImportance(axisValue(viewport.x,fx)),day=Math.round(axisValue(viewport.y,fy));
  return Number.isFinite(importance)&&Number.isFinite(day)?{importance,day}:null;
 }
-function openChartCreateMenu(p,x,y){
+function openChartCreateMenu(p,x,y,targetId=null){
  const point=mapCoordinateAt(p);if(!point)return;
  chartCreatePoint=point;suppressChartClickUntil=Date.now()+800;
- $('chartMenuTitle').textContent='重要性 '+numberLabel(point.importance)+' · 截止日期 '+dayLabel(point.day);
- const explicit=[...selectedTaskIds].filter(id=>tasks.some(t=>t.id===id)),hovered=selectedTaskId&&tasks.some(t=>t.id===selectedTaskId)?selectedTaskId:null;
+ let explicit=[...selectedTaskIds].filter(id=>tasks.some(t=>t.id===id));
+ const hovered=tasks.some(t=>t.id===(targetId||selectedTaskId))?(targetId||selectedTaskId):null;
+ if(targetId&&hovered&&!explicit.includes(hovered))explicit=[hovered];
  chartMenuDeleteIds=explicit.length?explicit:(hovered?[hovered]:[]);
  chartMenuAITaskId=explicit.length===1?explicit[0]:explicit.length===0?hovered:null;
- const aiBtn=$('chartMenuAIAdjust');aiBtn.disabled=!chartMenuAITaskId;aiBtn.textContent=chartMenuAITaskId?'✦ AI 调整':'✦ AI 调整（仅单个日程）';
+ chartMenuFocusId=chartMenuAITaskId;
  const selectedCount=chartMenuDeleteIds.length,deleteBtn=$('chartMenuDeleteSelected');
  deleteBtn.disabled=!selectedCount;
  deleteBtn.textContent=selectedCount>1?'批量删除已选日程（'+selectedCount+'）':selectedCount===1?(explicit.length?'删除已选日程':'删除悬浮日程'):'批量删除已选日程';
+ updateChartMenuAvailability();
  const menu=$('chartMenu');menu.hidden=false;
  menu.style.left=Math.max(8,Math.min(x,window.innerWidth-menu.offsetWidth-8))+'px';
  menu.style.top=Math.max(8,Math.min(y,window.innerHeight-menu.offsetHeight-8))+'px';
- $('chartMenuCreate').focus();
+ [...menu.querySelectorAll('button')].find(b=>!b.disabled)?.focus();
 }
+
+function updateChartMenuAvailability(){
+ const set=(id,reason)=>{const b=$(id);b.disabled=!!reason;b.title=reason||'';b.setAttribute('aria-disabled',String(!!reason));};
+ const busy=!!(radiusEdit||bubbleDrag||selectionDrag);
+ const one=tasks.find(t=>t.id===chartMenuAITaskId);
+ const focus=tasks.find(t=>t.id===chartMenuFocusId);
+ const settings=aiSettings();
+ set('chartMenuCreate',busy?'请先结束拖动':storageBlocked?'本地存储不可用':!chartCreatePoint?'请选择地图位置':'');
+ set('chartMenuFocus',busy?'请先结束拖动':!focus?'请选择单个日程':insideViewport(focus,Date.now())?'该日程已在视图中':!filtered().some(t=>t.id===focus.id)?'该日程被筛选条件隐藏':'');
+ set('chartMenuAIAdjust',busy?'请先结束拖动':storageBlocked?'本地存储不可用':!one?'请选择单个日程':chartAIAdjustBusy?'AI 调整正在进行':!settings.base||!settings.model||!settings.key?'请先保存 AI 接口设置':'');
+ set('chartMenuDeleteSelected',busy?'请先结束拖动':storageBlocked?'本地存储不可用':!chartMenuDeleteIds.some(id=>tasks.some(t=>t.id===id))?'请先选中日程':'');
+}
+function focusTaskAtMenu(){
+ updateChartMenuAvailability();if($('chartMenuFocus').disabled)return;
+ const id=chartMenuFocusId;closeChartMenu();focusTask(id);selectTask(id);
+}
+
 function createTaskAtMenu(){
+ updateChartMenuAvailability();if($('chartMenuCreate').disabled)return;
  const point=chartCreatePoint;if(!point)return;
  closeChartMenu();
  const t={id:uid(),title:'',details:'',category:'工作',importance:point.importance,workload:1,deadline:newDeadlineOnDay(point.day),done:false,difficulty:5,detailsMode:'text',draft:true};
@@ -715,6 +746,7 @@ function editTagInline(tag){
 }
 function deleteTask(id){const t=tasks.find(t=>t.id===id);if(!t)return;if(!confirm('删除“'+t.title+'”？'))return;closeChartMenu();tasks=tasks.filter(v=>v.id!==id);save();render();notify('日程已删除',()=>{if(!tasks.some(v=>v.id===t.id))tasks.push(t);save();render();});}
 function deleteSelectedTasks(){
+ updateChartMenuAvailability();if($('chartMenuDeleteSelected').disabled)return;
  const ids=new Set(chartMenuDeleteIds.filter(id=>tasks.some(t=>t.id===id))),removed=tasks.filter(t=>ids.has(t.id));
  if(!removed.length){closeChartMenu();return;}
  const label=removed.length===1?(removed[0].title||'未命名日程'):'选中的 '+removed.length+' 个日程';
@@ -730,16 +762,17 @@ function act(e){const b=e.target.closest('[data-edit],[data-toggle],[data-delete
 $('rows').onclick=act;$('chart').onclick=e=>{if(Date.now()<suppressChartClickUntil)return;const bubble=e.target.closest('.bubble[data-edit]');if(bubble){openMobileDetail(bubble.dataset.edit);return;}if(!e.target.closest('[data-edit]')){selectedTaskId=null;highlightSelection();requestLinks();}};
 $('chart').ondblclick=e=>{const tag=e.target.closest('.mobile-task-tag[data-edit]');if(tag){e.preventDefault();e.stopPropagation();editTagInline(tag);return;}const bubble=e.target.closest('.bubble[data-edit]');if(bubble){e.preventDefault();e.stopPropagation();openEditor(bubble.dataset.edit);}};
 $('chart').oncontextmenu=e=>{e.preventDefault();if(radiusEdit||bubbleDrag)return;if(activePointers.size>1||dragState?.moved)return;const p=chartPoint(e);if(!onPlot(p))return;mapHoldCancel();if(!$('chartMenu').hidden)return;openChartCreateMenu(p,e.clientX,e.clientY);};
-$('chart').onkeydown=e=>{const bubble=e.target.closest('[data-edit]');if(!bubble)return;if(e.key==='Delete'){e.preventDefault();deleteTask(bubble.dataset.edit);}else if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();const r=bubble.getBoundingClientRect(),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;openChartCreateMenu(chartPoint({clientX:x,clientY:y}),x,y);}else if(e.key==='Enter'||e.key===' '){e.preventDefault();if(e.shiftKey)openEditor(bubble.dataset.edit);else selectTask(bubble.dataset.edit,true);}};
+$('chart').onkeydown=e=>{const bubble=e.target.closest('[data-edit]');if(!bubble)return;if(e.key==='Delete'){e.preventDefault();deleteTask(bubble.dataset.edit);}else if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();const r=bubble.getBoundingClientRect(),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;openChartCreateMenu(chartPoint({clientX:x,clientY:y}),x,y,bubble.dataset.edit);}else if(e.key==='Enter'||e.key===' '){e.preventDefault();if(e.shiftKey)openEditor(bubble.dataset.edit);else selectTask(bubble.dataset.edit,true);}};
 $('chartMenuCreate').onclick=createTaskAtMenu;
-$('chartMenuAIAdjust').onclick=()=>adjustTaskWithAI(chartMenuAITaskId);
+$('chartMenuFocus').onclick=focusTaskAtMenu;
+$('chartMenuAIAdjust').onclick=()=>{updateChartMenuAvailability();if(!$('chartMenuAIAdjust').disabled)adjustTaskWithAI(chartMenuAITaskId);};
 $('chartMenuDeleteSelected').onclick=deleteSelectedTasks;
 $('chartMenu').onkeydown=e=>{
  if(e.key==='Escape'){e.preventDefault();closeChartMenu(true);return;}
  if(e.key==='Tab'){closeChartMenu();return;}
  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
   e.preventDefault();
-  const items=[$('chartMenuCreate'),$('chartMenuAIAdjust'),$('chartMenuDeleteSelected')].filter(b=>!b.disabled),i=items.indexOf(document.activeElement),step=e.key==='ArrowDown'?1:-1;
+  const items=[$('chartMenuCreate'),$('chartMenuFocus'),$('chartMenuAIAdjust'),$('chartMenuDeleteSelected')].filter(b=>!b.disabled),i=items.indexOf(document.activeElement),step=e.key==='ArrowDown'?1:-1;
   items[(i+step+items.length)%items.length]?.focus();
  }
 };
@@ -812,7 +845,7 @@ function readEditorAIResult(text,target,evidence){
  const out={};for(const k of Object.keys(editorAIFields)){
   if(target&&k!==target)continue;const v=raw[k];if(v===null||v===undefined||v==='')continue;
   if(['title','category','details'].includes(k)){const max={title:160,category:40,details:10000}[k];if(typeof v==='string'&&v.trim()&&v.length<=max)out[k]=v.trim();}
-  else if(k==='importance'){if(typeof v==='number'&&Number.isFinite(v))out[k]=String(v);}
+  else if(k==='importance'){if(typeof v==='number'&&Number.isFinite(v))out[k]=String(clampImportance(v));}
   else if(k==='difficulty'){if(Number.isInteger(v)&&v>=1&&v<=10)out[k]=String(v);}
   else if(k==='workload'){if(typeof v==='number'&&Number.isFinite(v)&&v>=.1&&v<=100000)out[k]=String(Math.round(v*10)/10);}
   else if(k==='deadline'){const d=editorAIDate(v);if(d&&typeof raw.deadlineEvidence==='string'&&raw.deadlineEvidence.trim().length>=2&&evidence.includes(raw.deadlineEvidence.trim()))out[k]=d;}
@@ -844,25 +877,28 @@ async function editorAIRequest(settings,controller,messages){
  return cleaned;
 }
 async function adjustTaskWithAI(id){
+ if(chartAIAdjustBusy||storageBlocked)return;
  const task=tasks.find(t=>t.id===id);if(!task)return;
  closeChartMenu();
  const settings=aiSettings();if(!settings.base||!settings.model||!settings.key){notify('请先在 AI 助手中保存 API 设置。');return;}
  const snapshot=JSON.stringify(task),references=tasks.filter(t=>t.id!==id).map(editorAIReferenceTask),controller=new AbortController();
  try{
+  chartAIAdjustBusy=true;
   notify('AI 正在结合全部日程调整…');
   const raw=await editorAIRequest(settings,controller,[
-   {role:'system',content:'你是谨慎的日程参数估计助手。只返回 JSON 对象，不要解释或输出思考过程。请一次性估计 currentTask 的 importance、difficulty、workload。existingSchedules 是该用户全部其他日程和已有标定，必须整体作为尺度参考。importance 可为任意有限正负小数；difficulty 必须是 1-10 整数；workload 是用户自己的工作量数值，不对应小时、工时或具体时长。无法可靠确定的字段必须返回 null，宁可不修改，也不要猜测。不要根据截止临近抬高 importance 或 difficulty。返回格式必须为 {"importance":数字或null,"difficulty":整数或null,"workload":数字或null}。'},
+   {role:'system',content:'你是谨慎的日程参数估计助手。只返回 JSON 对象，不要解释或输出思考过程。请一次性估计 currentTask 的 importance、difficulty、workload。existingSchedules 是该用户全部其他日程和已有标定，必须整体作为尺度参考。importance 必须为 -10 到 10 之间的有限数值；difficulty 必须是 1-10 整数；workload 是用户自己的工作量数值，不对应小时、工时或具体时长。无法可靠确定的字段必须返回 null，宁可不修改，也不要猜测。不要根据截止临近抬高 importance 或 difficulty。返回格式必须为 {"importance":数字或null,"difficulty":整数或null,"workload":数字或null}。'},
    {role:'user',content:aiTimeContext()+'\n'+JSON.stringify({currentTask:task,existingSchedules:references})}
   ]);
   const latest=tasks.find(t=>t.id===id);if(!latest||JSON.stringify(latest)!==snapshot)throw Error('日程已变化，请重新执行 AI 调整。');
   let parsed;try{parsed=JSON.parse(raw);}catch{throw Error('AI 调整结果格式无效。');}
   const changed=[];
-  if(typeof parsed?.importance==='number'&&Number.isFinite(parsed.importance)){latest.importance=parsed.importance;changed.push('重要性');}
+  if(typeof parsed?.importance==='number'&&Number.isFinite(parsed.importance)){latest.importance=clampImportance(parsed.importance);changed.push('重要性');}
   if(Number.isInteger(parsed?.difficulty)&&parsed.difficulty>=1&&parsed.difficulty<=10){latest.difficulty=parsed.difficulty;changed.push('困难度');}
   if(typeof parsed?.workload==='number'&&Number.isFinite(parsed.workload)&&parsed.workload>=.1&&parsed.workload<=100000){latest.workload=Math.round(parsed.workload*10)/10;changed.push('工作量');}
   if(!changed.length){notify('AI 未找到足够依据，未修改日程。');return;}
   save();render();notify('AI 已调整：'+changed.join('、')+'。');
  }catch(e){notify('AI 调整失败：'+e.message);}
+ finally{chartAIAdjustBusy=false;if(!$('chartMenu').hidden)updateChartMenuAvailability();}
 }
 async function runEditorAI(){
  if(editorAIController)return;
