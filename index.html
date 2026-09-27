@@ -329,6 +329,12 @@ function installLinks(){
   if(document.fonts?.ready)document.fonts.ready.then(requestLinks);
 }
 
+const TASK_CHECK_ICON="data:image/svg+xml;charset=utf-8,%3C%3Fxml%20version%3D%221.0%22%20standalone%3D%22no%22%3F%3E%3C!DOCTYPE%20svg%20PUBLIC%20%22-%2F%2FW3C%2F%2FDTD%20SVG%201.1%2F%2FEN%22%20%22http%3A%2F%2Fwww.w3.org%2FGraphics%2FSVG%2F1.1%2FDTD%2Fsvg11.dtd%22%3E%3Csvg%20t%3D%221790511403050%22%20class%3D%22icon%22%20viewBox%3D%220%200%201024%201024%22%20version%3D%221.1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20p-id%3D%221686%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%22200%22%20height%3D%22200%22%3E%3Cpath%20d%3D%22M416.832%20798.08c-16.192%200-32.32-6.208-44.672-18.56L119.424%20525.76c-24.64-24.768-24.64-64.96%200-89.728%2024.704-24.768%2064.704-24.768%2089.344%200l208.064%20208.896L814.4%20245.76c24.64-24.832%2064.64-24.832%2089.344%200%2024.64%2024.768%2024.64%2064.896%200%2089.664L461.504%20779.52c-12.352%2012.352-28.544%2018.56-44.672%2018.56z%22%20fill%3D%22%231AB394%22%20p-id%3D%221687%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E";
+function completedTaskIcon(task,cx,cy,r){
+ if(!task.done)return '';
+ const size=r*1.4;
+ return '<image class="task-completed-icon" href="'+TASK_CHECK_ICON+'" x="'+(cx-size/2)+'" y="'+(cy-size/2)+'" width="'+size+'" height="'+size+'" preserveAspectRatio="xMidYMid meet" pointer-events="none" aria-hidden="true"/>';
+}
 function draw(a,outside,now){
   a=a.map(bubblePreview);
   const {left:L,right:R,top:T,bottom:B}=chartBox,original=isOriginal(),sx=v=>L+axisFraction(v,viewport.x)*(R-L),sy=v=>T+axisFraction(v,viewport.y)*(B-T);
@@ -348,7 +354,7 @@ function draw(a,outside,now){
   if(bubbleDrag?.snapGuide){const g=bubbleDrag.snapGuide;s+=`<line x1="${g.x}" x2="${g.x}" y1="${Math.max(T,g.y1-18)}" y2="${Math.min(B,g.y2+18)}" stroke="#286c59" stroke-width="1.5" stroke-dasharray="5 4" opacity=".75" pointer-events="none"/>`;}
   s+=`<g clip-path="url(#plotClip)">`;
   const size=t=>original?t.workload:t.importance,radii=taskRadii(a,original);
-  for(const t of [...a].sort((a,b)=>size(b)-size(a))){const [x,y]=coordinates(t,now),r=radii.get(t.id);s+=`<circle class="bubble" tabindex="0" role="button" aria-label="${esc(t.title)}，重要性${t.importance}，截止${dayLabel(y)}，困难度${t.difficulty}，工作量${t.workload}" data-edit="${esc(t.id)}" cx="${sx(x)}" cy="${sy(y)}" r="${r}" fill="${difficultyColor(t.difficulty)}" fill-opacity="${t.done ? .25 : .72}" stroke="${difficultyColor(t.difficulty)}" stroke-width="1.5"><title>${esc(t.title)}\n工作量 ${t.workload} · 重要性 ${t.importance} · 截止 ${dayLabel(y)} · 困难度 ${t.difficulty}\n${t.done?'已完成':countdown(t.deadline,now)}</title></circle>`;}
+  for(const t of [...a].sort((a,b)=>size(b)-size(a))){const [x,y]=coordinates(t,now),r=radii.get(t.id);s+=`<circle class="bubble" tabindex="0" role="button" aria-label="${esc(t.title)}，重要性${t.importance}，截止${dayLabel(y)}，困难度${t.difficulty}，工作量${t.workload}" data-edit="${esc(t.id)}" cx="${sx(x)}" cy="${sy(y)}" r="${r}" fill="${difficultyColor(t.difficulty)}" fill-opacity="${t.done ? .25 : .72}" stroke="${difficultyColor(t.difficulty)}" stroke-width="1.5"><title>${esc(t.title)}\n工作量 ${t.workload} · 重要性 ${t.importance} · 截止 ${dayLabel(y)} · 困难度 ${t.difficulty}\n${t.done?'已完成':countdown(t.deadline,now)}</title></circle>`;s+=completedTaskIcon(t,sx(x),sy(y),r);}
   s+='</g>';s+=mobileTags(a,now,sx,sy,radii);if(!a.length)s+=`<text x="${(L+R)/2}" y="${(T+B)/2}" text-anchor="middle" fill="#87929d" font-size="16">此范围内暂无任务 · 可滚动或缩放探索</text>`;
   const focusId=document.activeElement?.dataset?.edit;$('chart').innerHTML=s;if(focusId)[...$('chart').querySelectorAll('[data-edit]')].find(el=>el.dataset.edit===focusId)?.focus();
   $('chart').setAttribute('aria-label','重要性与截止日期地图。越早截止越靠上；鼠标拖动空白区域框选，滚轮平移，Ctrl 加滚轮缩放');
