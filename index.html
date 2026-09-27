@@ -210,8 +210,9 @@ function clearAllTasks(){
  window.location.reload();
 }
 $('clearTasks').onclick=clearAllTasks;
+const pendingTagCreations=new Set();
 function load(){try{const raw=localStorage.getItem(KEY);if(raw)tasks=unpack(JSON.parse(raw));}catch(e){storageBlocked=true;$('storageError').hidden=false;$('storageError').textContent='本地数据无法读取：'+e.message+'。为保护原数据，本次不覆盖存储；如需重置，可点击“清空所有日程”删除本地日程数据并重新加载。';$('saveStatus').textContent='本地存储不可用，请导出备份';}}
-function save(){if(storageBlocked){notify('本次修改仅在内存中，请导出备份');return;}try{localStorage.setItem(KEY,JSON.stringify({app:'FocusSchedule',version:5,tasks}));$('saveStatus').textContent='已自动保存到本机 · '+new Date().toLocaleTimeString('zh-CN');}catch(e){$('storageError').hidden=false;$('storageError').textContent='自动保存失败（可能空间不足或浏览器限制）。请立即导出备份。';$('saveStatus').textContent='保存失败 · 请导出备份';notify('自动保存失败，请导出备份');}}
+function save(){if(storageBlocked){notify('本次修改仅在内存中，请导出备份');return;}try{localStorage.setItem(KEY,JSON.stringify({app:'FocusSchedule',version:5,tasks:tasks.filter(t=>!pendingTagCreations.has(t.id))}));$('saveStatus').textContent='已自动保存到本机 · '+new Date().toLocaleTimeString('zh-CN');}catch(e){$('storageError').hidden=false;$('storageError').textContent='自动保存失败（可能空间不足或浏览器限制）。请立即导出备份。';$('saveStatus').textContent='保存失败 · 请导出备份';notify('自动保存失败，请导出备份');}}
 function notify(msg,undo){clearTimeout(toastTimer);$('toast').replaceChildren(document.createTextNode(msg));if(undo){const b=document.createElement('button');b.textContent='撤销';b.style.marginLeft='15px';b.onclick=()=>{undo();$('toast').hidden=true;};$('toast').append(b);}$('toast').hidden=false;toastTimer=setTimeout(()=>$('toast').hidden=true,undo?12000:4500);}
 function countdown(deadline,now=Date.now()){const ms=Date.parse(deadline)-now,sec=Math.floor(Math.abs(ms)/1000),d=Math.floor(sec/86400),h=Math.floor(sec%86400/3600),m=Math.floor(sec%3600/60),s=sec%60;return(ms<0?'逾期 ':'剩余 ')+(d?d+'天 ':'')+h+'时 '+m+'分 '+s+'秒';}
 function cats(){return [...new Set(tasks.map(t=>t.category))].sort((a,b)=>a.localeCompare(b,'zh-CN'));}
@@ -751,7 +752,7 @@ function createTaskAtMenu(){
  const point=chartCreatePoint;if(!point)return;
  closeChartMenu();
  const t={id:uid(),title:'',details:'',category:'工作',importance:point.importance,workload:1,deadline:newDeadlineOnDay(point.day),done:false,difficulty:5,detailsMode:'text',draft:true};
- tasks.push(t);save();focusTaskTag(t.id,true);
+ pendingTagCreations.add(t.id);tasks.push(t);focusTaskTag(t.id,true);
 }
 
 let inlineTagEditor=null;
@@ -768,10 +769,15 @@ function editTagInline(tag){
  const reposition=()=>{if(finished)return;const currentTag=taskTagElement(id);if(!currentTag)return;const r=(currentTag.querySelector('rect')||currentTag).getBoundingClientRect();input.style.left=r.left+'px';input.style.top=r.top+'px';input.style.width=Math.max(64,r.width)+'px';input.style.height=Math.max(32,r.height)+'px';};
  const commit=(saveChange,restoreFocus=false)=>{
   if(!cleanup())return;
-  if(saveChange){
-   const latest=tasks.find(v=>v.id===id);
+  const latest=tasks.find(v=>v.id===id),isNew=pendingTagCreations.has(id),value=input.value.trim();
+  pendingTagCreations.delete(id);
+  if(isNew&&latest&&latest.title===originalTitle&&(!saveChange||!value)){
+   tasks=tasks.filter(v=>v.id!==id);selectedTaskIds.delete(id);
+   if(selectedTaskId===id)selectedTaskId=null;if(pinnedTaskId===id)pinnedTaskId=null;hoverPointer=null;
+   save();render();notify('未填写标题，已撤回创建。');
+  }else if(saveChange){
    if(latest&&latest.title===originalTitle){
-    const value=input.value.trim();latest.title=value;
+    latest.title=value;
     if(value)delete latest.draft;else latest.draft=true;
     save();render();
    }else notify('日程已被修改或删除，本次标题编辑未保存。');
@@ -822,7 +828,7 @@ $('chartMenu').onkeydown=e=>{
  }
 };
 window.addEventListener('pointerdown',e=>{if(!$('chartMenu').hidden&&!$('chartMenu').contains(e.target))closeChartMenu();});window.addEventListener('resize',()=>closeChartMenu());window.addEventListener('scroll',()=>closeChartMenu(),true);
-$('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify({app:'FocusSchedule',version:5,exportedAt:new Date().toISOString(),tasks},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='日程备份-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('备份已导出');};
+$('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify({app:'FocusSchedule',version:5,exportedAt:new Date().toISOString(),tasks:tasks.filter(t=>!pendingTagCreations.has(t.id))},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='日程备份-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('备份已导出');};
 $('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{if(f.size>30*1024*1024)throw Error('文件超过 30 MB');const incoming=unpack(JSON.parse(await f.text()));const conflicts=incoming.filter(t=>tasks.some(v=>v.id===t.id)).length;if(!confirm(`导入 ${incoming.length} 条日程，其中 ${conflicts} 条将更新同 ID 日程；其余现有日程保留。继续？`))return;const map=new Map(tasks.map(t=>[t.id,t]));incoming.forEach(t=>map.set(t.id,t));const merged=[...map.values()];validate(merged);tasks=merged;save();render();notify('导入完成');}catch(err){notify('导入失败：'+err.message);}finally{e.target.value='';}};
 window.addEventListener('storage',e=>{if(e.key!==KEY||storageBlocked)return;try{tasks=e.newValue?unpack(JSON.parse(e.newValue)):[];render();notify('已同步另一个窗口的修改');}catch(err){notify('另一个窗口的数据无效，未同步');}});
 
