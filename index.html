@@ -5,7 +5,7 @@
 
 .md{line-height:1.75;overflow-wrap:anywhere}.md h1,.md h2,.md h3{margin:16px 0 8px;font-size:1.25em}.md p{margin:8px 0}.md pre{background:#edf1f5;padding:12px;border-radius:8px;overflow:auto;white-space:pre}.md code{font-family:Consolas,monospace;background:#edf1f5;padding:2px 4px;border-radius:4px}.md pre code{padding:0}.md blockquote{margin:10px 0;border-left:3px solid #94b8aa;padding:4px 12px;color:#687587}.md table{min-width:0;width:auto;display:block;overflow:auto}.md th,.md td{padding:6px 10px;border:1px solid #dbe0e6}.md a{color:#286c59}.md img{max-width:100%}.md ul,.md ol{padding-left:24px}.md hr{border:0;border-top:1px solid #dbe0e6}.detailscell{max-width:340px}.detailscell summary{cursor:pointer;font-size:12px;color:#687587}.detailsfull{max-height:260px;overflow:auto;font-size:13px;white-space:pre-wrap;margin-top:8px}.detailsfull.md{white-space:normal}.details-tools{display:flex;justify-content:space-between;align-items:center;gap:8px}.details-tools button{font-size:12px;padding:5px 10px}#markdownPreview{min-height:130px;max-height:330px;overflow:auto;padding:12px;border:1px solid #d6dce4;border-radius:8px;background:#fbfcfd}#taskDetails{min-height:170px}.difficulty{font-weight:600;white-space:nowrap}.difficulty i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px}.chart-controls{padding:14px 22px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.difficulty-legend{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.legend{padding-left:0}.md-tip{font-size:12px;color:#687587}dialog{width:min(660px,94vw)}
 
-#chartMenu{position:fixed;z-index:20;width:240px;background:white;border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 10px 40px #182b3b33}#chartMenu button{display:block;width:100%;text-align:left;border:0;padding:9px}#chartMenu button:disabled{opacity:.4;cursor:not-allowed}#chartMenu .menuhint{padding:5px 9px;font-size:11px;color:var(--muted)}
+#chartMenu{max-height:calc(100dvh - 16px);overflow-y:auto;position:fixed;z-index:20;width:240px;background:white;border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 10px 40px #182b3b33}#chartMenu button{display:block;width:100%;text-align:left;border:0;padding:9px}#chartMenu button:disabled{opacity:.4;cursor:not-allowed}#chartMenu .menuhint{padding:5px 9px;font-size:11px;color:var(--muted)}
 
 main{max-width:1760px}.linked-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(360px,1fr);gap:20px;align-items:start}.chart-panel{position:sticky;top:16px}.chartwrap svg{min-width:0;width:100%;touch-action:none;user-select:none;cursor:crosshair}.chartwrap svg.dragging,.chartwrap svg.dragging .bubble{cursor:grabbing}.chartwrap{padding:10px 12px}.chart-controls{padding:14px 16px 0}.chart-controls select{max-width:100%}.legend{gap:10px;font-size:12px}.task-list{max-height:850px;overflow:auto;overscroll-behavior:contain}.taskcard{padding:16px 20px;border-top:1px solid var(--line)}.taskcard:first-child{border-top:0}.taskcard-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:4px}.taskcard .titlebtn{max-width:none;font-size:16px}.taskcard .detailscell{max-width:none;margin:10px 0}.taskcard .detailsfull{max-height:240px}.taskcard .countdown{margin:4px 0}.task-metrics{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin:8px 0}.outside-card{background:#fafbfc}.rowactions{flex-wrap:wrap}.list-tools{padding:14px 18px 6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.list-order{padding:0 18px 12px}.range-settings{margin:14px 16px 0;font-size:12px;color:var(--muted)}.range-settings summary{cursor:pointer}.range-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.range-pair{display:flex;align-items:center;gap:6px;margin-top:4px}.range-pair input{width:100%;min-width:0;padding:7px}.range-settings button{font-size:12px}.list-panel .empty{padding:40px 20px}.note{padding:12px 16px}@media(max-width:1099px){.linked-layout{grid-template-columns:minmax(0,1fr)}.chart-panel{position:static}.task-list{max-height:none}}@media(max-width:540px){main{padding:10px}.chart-controls{gap:6px}.chart-controls button{font-size:12px;padding:7px 9px}.chart-controls select{font-size:12px}.range-grid{grid-template-columns:1fr}.panelhead{padding:14px}.chartwrap{padding:8px 2px}.legend{padding:8px;gap:7px}.taskcard{padding:14px}.note{font-size:11px}}
 
@@ -68,7 +68,7 @@ body.mobile-mode .twocol{grid-template-columns:1fr}
 <dialog id="mobileDetail" aria-labelledby="mobileDetailTitle"><div class="dialoghead"><h2 id="mobileDetailTitle"></h2><button id="mobileDetailClose" aria-label="关闭详情">✕</button></div><div class="formbody"><p id="mobileDetailMeta"></p><p id="mobileDetailDate" class="small"></p><p id="mobileDetailCountdown"></p><div id="mobileDetailBody" class="md"></div></div><div class="formfoot"><button id="mobileEdit">编辑</button><button id="mobileComplete" class="primary">标记完成</button><button id="mobileDelete" class="danger">删除</button></div></dialog>
 <dialog id="help"><div class="dialoghead"><h2>使用说明</h2><button id="closeHelp" aria-label="关闭说明">✕</button></div><div class="helpbody"><p><b>开始使用：</b>将此 HTML 文件保存在固定文件夹，使用 Windows 上的 Edge 或 Chrome 打开。无需安装 Python，无需网络。</p><p><b>四个属性：</b>重要性为 −10～10 的数值；截止时间直接决定地图纵轴位置；困难度为 1–10 级；工作量使用数值表示，支持小数。</p><p><b>Markdown：</b>在纯文本编辑框输入内容，点击“Markdown 预览”查看排版，随时切回编辑。保存时保留显示模式，点击地图上的标题标签可阅读全文。支持常用 Markdown（标题、列表、任务清单、引用、代码、表格、链接）。原始 HTML 仅作为文字显示；远程图片只显示说明与链接。</p><p><b>地图：</b>仅提供重要性 × 截止日期视图，越早截止的任务越靠上；纵轴刻度最小间隔为 1 天。圆圈半径固定为 √(40 × 工作量)，不随视图范围和可见日程变化；拖动边缘会修改工作量，松开后保持对应大小；重要性 0 与今天将背景划分为四个区域，圆圈颜色表示困难度。电脑端左键拖动空白区域进行框选，框中的多个圆可同时选中；拖动任一已选圆内部可整体平移选中圆，其中纵向移动按整天调整截止日期；按住圆圈边界并上下移动鼠标调整半径，松开后确认并退出，多选时所有已选圆同步缩放；按住 Ctrl 时光标变为抓取手势，左键拖动可平移整个视图。滚轮默认上下移动视图，横轴固定为 −10～10，Shift + 滚轮不移动横轴，Ctrl + 滚轮以鼠标位置为中心缩放纵轴。右键地图（手机长按）按所在重要性和日期创建日程。</p><p><b>快捷操作：</b>选中日程后按 Delete 删除（多选时批量删除，确认后可撤销）；F2 直接编辑单选日程标题。创建日程后自动进入标题输入，Enter 保存，Esc 取消编辑并回到标签；地图上按 Esc 清除选择。输入文字或打开弹窗时 Delete 不会删除日程。</p><p><b>本地保存：</b>每次修改自动保存到当前浏览器的 localStorage。请固定使用同一浏览器、同一文件位置，并避免无痕模式。清除浏览器数据、移动或重命名文件后，数据可能无法继续读取。</p><p><b>备份迁移：</b>点击“导出备份”下载 JSON 文件。导入采用合并方式；相同 ID 的日程以备份内容更新，其余保留。删除前会确认，删除后短时间内可撤销。支持导入旧版备份；旧版中的迫切性字段会被忽略，重要性和截止时间继续保留；版本 1 日程困难度默认为 5，细节默认为纯文本。</p><p>数据不发送到服务器。本软件没有后台通知功能，关闭页面后不会弹出提醒。</p></div></dialog>
 <dialog id="aiDialog"><div class="dialoghead"><h2>✦ AI 助手</h2><button id="closeAi" aria-label="关闭">✕</button></div><div class="formbody"><div class="field"><label>API 设置</label><div class="twocol"><input id="aiBase" placeholder="https://api.minimax.io/v1"><input id="aiModel" placeholder="MiniMax-M2.5"></div><input id="aiKey" type="password" placeholder="API Key（仅保存在本机）"><div class="small">MiniMax 官方 OpenAI 兼容地址：海外通常为 https://api.minimax.io/v1，国内区域请使用控制台提供的地址。浏览器直连可能受 CORS 或网络策略影响。</div></div><div class="actions"><button id="saveAi">保存设置</button><button id="reportAi" class="primary">生成今日汇报</button><button id="planAi">给出今日完成建议</button></div><div class="field"><label for="aiPrompt">向助手提问</label><textarea id="aiPrompt" placeholder="例如：帮我把当前任务拆成三个可执行步骤"></textarea><button id="askAi" class="primary">发送问题</button></div><div id="aiStatus" class="small"></div><div id="aiOutput" class="md" hidden></div></div></dialog>
-<div id="chartMenu" hidden role="menu" aria-label="地图操作"><button id="chartMenuCreate" role="menuitem">创建日程</button><button id="chartMenuDetail" role="menuitem" disabled>详情</button><button id="chartMenuEdit" role="menuitem" disabled>编辑</button><button id="chartMenuFocus" role="menuitem" disabled>转到此日程</button><button id="chartMenuAIAdjust" role="menuitem" disabled>✦ AI 调整</button><button id="chartMenuDeleteSelected" class="danger" role="menuitem" disabled>批量删除已选日程</button><div class="menu-difficulty" role="group" aria-label="调整困难度"><label for="chartMenuDifficulty">困难度 <output id="chartMenuDifficultyValue" for="chartMenuDifficulty">—</output></label><input id="chartMenuDifficulty" type="range" min="1" max="10" step="1" value="5" disabled></div></div>
+<div id="chartMenu" hidden role="menu" aria-label="地图操作"><button id="chartMenuCreate" role="menuitem">创建日程</button><button id="chartMenuDetail" role="menuitem" disabled>详情</button><button id="chartMenuEdit" role="menuitem" disabled>编辑</button><button id="chartMenuFocus" role="menuitem" disabled>转到此日程</button><button id="chartMenuAIAdjust" role="menuitem" disabled>✦ AI 调整</button><button id="chartMenuMarkDone" role="menuitem" disabled>标记完成</button><button id="chartMenuMarkUndone" role="menuitem" disabled>标记未完成</button><button id="chartMenuDeleteSelected" class="danger" role="menuitem" disabled>批量删除已选日程</button><div class="menu-difficulty" role="group" aria-label="调整困难度"><label for="chartMenuDifficulty">困难度 <output id="chartMenuDifficultyValue" for="chartMenuDifficulty">—</output></label><input id="chartMenuDifficulty" type="range" min="1" max="10" step="1" value="5" disabled></div></div>
 <input id="importFile" type="file" accept=".json,application/json" hidden><div id="toast" role="status" hidden></div>
 <!-- Bundled Markdown parser: Marked 17.0.5, MIT license
 # License information
@@ -329,11 +329,12 @@ function installLinks(){
   if(document.fonts?.ready)document.fonts.ready.then(requestLinks);
 }
 
-const TASK_CHECK_ICON="data:image/svg+xml;charset=utf-8,%3C%3Fxml%20version%3D%221.0%22%20standalone%3D%22no%22%3F%3E%3C!DOCTYPE%20svg%20PUBLIC%20%22-%2F%2FW3C%2F%2FDTD%20SVG%201.1%2F%2FEN%22%20%22http%3A%2F%2Fwww.w3.org%2FGraphics%2FSVG%2F1.1%2FDTD%2Fsvg11.dtd%22%3E%3Csvg%20t%3D%221790511403050%22%20class%3D%22icon%22%20viewBox%3D%220%200%201024%201024%22%20version%3D%221.1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20p-id%3D%221686%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%22200%22%20height%3D%22200%22%3E%3Cpath%20d%3D%22M416.832%20798.08c-16.192%200-32.32-6.208-44.672-18.56L119.424%20525.76c-24.64-24.768-24.64-64.96%200-89.728%2024.704-24.768%2064.704-24.768%2089.344%200l208.064%20208.896L814.4%20245.76c24.64-24.832%2064.64-24.832%2089.344%200%2024.64%2024.768%2024.64%2064.896%200%2089.664L461.504%20779.52c-12.352%2012.352-28.544%2018.56-44.672%2018.56z%22%20fill%3D%22%231AB394%22%20p-id%3D%221687%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E";
+// Render the supplied check.svg path directly, avoiding SVG image loading.
+const TASK_CHECK_PATH="M416.832 798.08c-16.192 0-32.32-6.208-44.672-18.56L119.424 525.76c-24.64-24.768-24.64-64.96 0-89.728 24.704-24.768 64.704-24.768 89.344 0l208.064 208.896L814.4 245.76c24.64-24.832 64.64-24.832 89.344 0 24.64 24.768 24.64 64.896 0 89.664L461.504 779.52c-12.352 12.352-28.544 18.56-44.672 18.56z";
 function completedTaskIcon(task,cx,cy,r){
  if(!task.done)return '';
  const size=r*1.4;
- return '<image class="task-completed-icon" href="'+TASK_CHECK_ICON+'" x="'+(cx-size/2)+'" y="'+(cy-size/2)+'" width="'+size+'" height="'+size+'" preserveAspectRatio="xMidYMid meet" pointer-events="none" aria-hidden="true"/>';
+ return '<svg class="task-completed-icon" x="'+(cx-size/2)+'" y="'+(cy-size/2)+'" width="'+size+'" height="'+size+'" viewBox="0 0 1024 1024" pointer-events="none" aria-hidden="true"><path d="'+TASK_CHECK_PATH+'" fill="#1AB394" stroke="white" stroke-width="18" paint-order="stroke" pointer-events="none"/></svg>';
 }
 function draw(a,outside,now){
   a=a.map(bubblePreview);
@@ -354,7 +355,8 @@ function draw(a,outside,now){
   if(bubbleDrag?.snapGuide){const g=bubbleDrag.snapGuide;s+=`<line x1="${g.x}" x2="${g.x}" y1="${Math.max(T,g.y1-18)}" y2="${Math.min(B,g.y2+18)}" stroke="#286c59" stroke-width="1.5" stroke-dasharray="5 4" opacity=".75" pointer-events="none"/>`;}
   s+=`<g clip-path="url(#plotClip)">`;
   const size=t=>original?t.workload:t.importance,radii=taskRadii(a,original);
-  for(const t of [...a].sort((a,b)=>size(b)-size(a))){const [x,y]=coordinates(t,now),r=radii.get(t.id);s+=`<circle class="bubble" tabindex="0" role="button" aria-label="${esc(t.title)}，重要性${t.importance}，截止${dayLabel(y)}，困难度${t.difficulty}，工作量${t.workload}" data-edit="${esc(t.id)}" cx="${sx(x)}" cy="${sy(y)}" r="${r}" fill="${difficultyColor(t.difficulty)}" fill-opacity="${t.done ? .25 : .72}" stroke="${difficultyColor(t.difficulty)}" stroke-width="1.5"><title>${esc(t.title)}\n工作量 ${t.workload} · 重要性 ${t.importance} · 截止 ${dayLabel(y)} · 困难度 ${t.difficulty}\n${t.done?'已完成':countdown(t.deadline,now)}</title></circle>`;s+=completedTaskIcon(t,sx(x),sy(y),r);}
+  for(const t of [...a].sort((a,b)=>size(b)-size(a))){const [x,y]=coordinates(t,now),r=radii.get(t.id);s+=`<circle class="bubble" tabindex="0" role="button" aria-label="${esc(t.title)}，重要性${t.importance}，截止${dayLabel(y)}，困难度${t.difficulty}，工作量${t.workload}" data-edit="${esc(t.id)}" cx="${sx(x)}" cy="${sy(y)}" r="${r}" fill="${difficultyColor(t.difficulty)}" fill-opacity="${t.done ? .25 : .72}" stroke="${difficultyColor(t.difficulty)}" stroke-width="1.5"><title>${esc(t.title)}\n工作量 ${t.workload} · 重要性 ${t.importance} · 截止 ${dayLabel(y)} · 困难度 ${t.difficulty}\n${t.done?'已完成':countdown(t.deadline,now)}</title></circle>`;}
+  for(const t of a){const [x,y]=coordinates(t,now);s+=completedTaskIcon(t,sx(x),sy(y),radii.get(t.id));}
   s+='</g>';s+=mobileTags(a,now,sx,sy,radii);if(!a.length)s+=`<text x="${(L+R)/2}" y="${(T+B)/2}" text-anchor="middle" fill="#87929d" font-size="16">此范围内暂无任务 · 可滚动或缩放探索</text>`;
   const focusId=document.activeElement?.dataset?.edit;$('chart').innerHTML=s;if(focusId)[...$('chart').querySelectorAll('[data-edit]')].find(el=>el.dataset.edit===focusId)?.focus();
   $('chart').setAttribute('aria-label','重要性与截止日期地图。越早截止越靠上；鼠标拖动空白区域框选，滚轮平移，Ctrl 加滚轮缩放');
@@ -696,6 +698,10 @@ function updateChartMenuAvailability(){
  const one=tasks.find(t=>t.id===chartMenuAITaskId);
  const focus=tasks.find(t=>t.id===chartMenuFocusId);
  const settings=aiSettings();
+ const ids=new Set(chartMenuDeleteIds),picked=tasks.filter(t=>ids.has(t.id));
+ const reason=busy?'请先结束拖动':storageBlocked?'本地存储不可用':!picked.length?'请先选中日程':'';
+ set('chartMenuMarkDone',reason||(!picked.some(t=>!t.done)?'所选日程均已完成':''));
+ set('chartMenuMarkUndone',reason||(!picked.some(t=>t.done)?'所选日程均未完成':''));
  set('chartMenuDifficulty',busy?'请先结束拖动':storageBlocked?'本地存储不可用':!one?'请选择单个日程':'');
  $('chartMenuDifficulty').value=one?one.difficulty:5;
  $('chartMenuDifficultyValue').textContent=one?String(one.difficulty):'—';
@@ -815,6 +821,18 @@ $('chartMenuEdit').onclick=()=>{updateChartMenuAvailability();if($('chartMenuEdi
 $('chartMenuFocus').onclick=focusTaskAtMenu;
 $('chartMenuAIAdjust').onclick=()=>{updateChartMenuAvailability();if(!$('chartMenuAIAdjust').disabled)adjustTaskWithAI(chartMenuAITaskId);};
 $('chartMenuDeleteSelected').onclick=deleteSelectedTasks;
+function markMenuTasksDone(done){
+ updateChartMenuAvailability();
+ if($(done?'chartMenuMarkDone':'chartMenuMarkUndone').disabled)return;
+ const ids=new Set(chartMenuDeleteIds),changed=tasks.filter(t=>ids.has(t.id)&&t.done!==done);
+ if(!changed.length)return;
+ for(const task of changed)task.done=done;
+ closeChartMenu();save();render();
+ if($('mobileDetail').open&&mobileDetailId&&tasks.some(t=>t.id===mobileDetailId))openMobileDetail(mobileDetailId);
+ notify('已将 '+changed.length+' 个日程标记为'+(done?'完成':'未完成'));
+}
+$('chartMenuMarkDone').onclick=()=>markMenuTasksDone(true);
+$('chartMenuMarkUndone').onclick=()=>markMenuTasksDone(false);
 function adjustMenuDifficulty(){
  const input=$('chartMenuDifficulty'),value=Number(input.value);
  const task=tasks.find(t=>t.id===chartMenuAITaskId);
@@ -829,7 +847,7 @@ $('chartMenu').onkeydown=e=>{
  if(e.target===$('chartMenuDifficulty')&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown'].includes(e.key))return;
  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
   e.preventDefault();
-  const items=[$('chartMenuCreate'),$('chartMenuDetail'),$('chartMenuEdit'),$('chartMenuFocus'),$('chartMenuAIAdjust'),$('chartMenuDeleteSelected'),$('chartMenuDifficulty')].filter(b=>!b.disabled),i=items.indexOf(document.activeElement),step=e.key==='ArrowDown'?1:-1;
+  const items=[$('chartMenuCreate'),$('chartMenuDetail'),$('chartMenuEdit'),$('chartMenuFocus'),$('chartMenuAIAdjust'),$('chartMenuMarkDone'),$('chartMenuMarkUndone'),$('chartMenuDeleteSelected'),$('chartMenuDifficulty')].filter(b=>!b.disabled),i=items.indexOf(document.activeElement),step=e.key==='ArrowDown'?1:-1;
   items[(i+step+items.length)%items.length]?.focus();
  }
 };
