@@ -1119,4 +1119,5 @@ function initMobile(){
 
 window.addEventListener('keydown',handleMapShortcut,true);
 installLinks();installChartInteraction();load();resetViewport();render();initMobile();setInterval(()=>{tick();if($('mobileDetail').open&&mobileDetailId){const t=tasks.find(t=>t.id===mobileDetailId);if(t)$('mobileDetailCountdown').textContent=t.done?'已完成':countdown(t.deadline);else $('mobileDetail').close();}},1000);
-</script></body></html>
+</script><script src="./assets/js/webdav-sync.js"></script>
+</body></html>
