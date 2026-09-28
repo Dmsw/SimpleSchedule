@@ -1119,4 +1119,7 @@ function initMobile(){
 
 window.addEventListener('keydown',handleMapShortcut,true);
 installLinks();installChartInteraction();load();resetViewport();render();initMobile();setInterval(()=>{tick();if($('mobileDetail').open&&mobileDetailId){const t=tasks.find(t=>t.id===mobileDetailId);if(t)$('mobileDetailCountdown').textContent=t.done?'已完成':countdown(t.deadline);else $('mobileDetail').close();}},1000);
-</script></body></html>
+</script><script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@5.22.0/lib/msal-browser.min.js" crossorigin="anonymous"></script>
+<script src="./assets/js/onedrive-config.js"></script>
+<script src="./assets/js/onedrive-sync.js"></script>
+</body></html>
