@@ -601,7 +601,7 @@ function installChartInteraction(){
  $('resetChart').onclick=resetViewport;$('fitChart').onclick=fitAllTasks;
  $('applyRange').onclick=()=>{const x=[-12,12],y=[dayFromInput($('yMin').value),dayFromInput($('yMax').value)];if(![...x,...y].every(Number.isFinite)||x[0]>=x[1]||y[0]>=y[1]){notify('范围必须有效，且最早日期必须早于最晚日期');return;}setViewport({x,y});renderLinked(Date.now());};
  $('listScope').onchange=()=>renderLinked(Date.now());
- window.addEventListener('blur',()=>{finishRadiusEdit(false);finishBubbleDrag(false);finishSelectionDrag(false);cancelHold();closeChartMenu();activePointers.clear();dragState=null;ctrlPanKey=false;svg.style.cursor='';});
+ window.addEventListener('blur',()=>{finishBubbleDrag(false);finishSelectionDrag(false);cancelHold();closeChartMenu();activePointers.clear();dragState=null;ctrlPanKey=false;svg.style.cursor='';});
 }
 function localInput(date){const d=new Date(date);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);}
 function openEditor(id){if(bubbleDrag)finishBubbleDrag(false);const t=tasks.find(t=>t.id===id);resetEditorAI(t);$('taskForm').reset();$('editorTitle').textContent=t?'编辑日程':'新建日程';$('taskId').value=t?.id||'';$('taskTitle').value=t?.title||'';$('taskDetails').value=t?.details||'';$('taskCategory').value=t?.category||'工作';$('taskWorkload').value=t?.workload||5;updateWorkload();$('taskDeadline').value=localInput(t?.deadline||Date.now()+DAY);$('taskImportance').value=t?.importance??0;$('importanceValue').value=$('taskImportance').value;$('taskDone').checked=t?.done||false;setDetailsMode(t?.detailsMode||'text');$('editor').showModal();$('taskTitle').focus();}
@@ -981,7 +981,7 @@ function updateMobileLayout(){
  const top=rect.top+(window.scrollY||0),legendHeight=$('legend').getBoundingClientRect().height||32;
  const h=Math.max(mobileMode?300:320,Math.round(window.innerHeight-top-legendHeight-24));
  if(w===chartBox.width&&h===chartBox.height&&wasMobile===mobileMode)return;
- finishRadiusEdit(false);finishBubbleDrag(false);finishSelectionDrag(false);
+ finishBubbleDrag(false);finishSelectionDrag(false);
  mapHoldCancel();closeChartMenu();
  Object.assign(chartBox,{left:mobileMode?68:92,right:w-(mobileMode?16:28),top:mobileMode?40:46,bottom:h-64,width:w,height:h});
  svg.style.height=h+'px';svg.setAttribute('viewBox','0 0 '+w+' '+h);
