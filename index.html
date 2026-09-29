@@ -368,7 +368,7 @@ function draw(a,outside,now){
   if(bubbleDrag?.snapGuide){const g=bubbleDrag.snapGuide;s+=`<line x1="${g.x}" x2="${g.x}" y1="${Math.max(T,g.y1-18)}" y2="${Math.min(B,g.y2+18)}" stroke="#286c59" stroke-width="1.5" stroke-dasharray="5 4" opacity=".75" pointer-events="none"/>`;}
   s+=`<g clip-path="url(#plotClip)">`;
   const radii=taskRadii(a);
-  for(const t of a){const [x,y]=coordinates(t,now),r=radii.get(t.id);s+=`<circle class="bubble" tabindex="0" role="button" aria-label="${esc(t.title)}，重要性${t.importance}，截止${dayLabel(y)}，任务量${t.workload}，完成度${t.completion}%" data-edit="${esc(t.id)}" cx="${sx(x)}" cy="${sy(y)}" r="${r}" fill="${completionColor(t.completion)}" fill-opacity="${t.done ? .25 : .72}" stroke="${completionColor(t.completion)}" stroke-width="1.5"><title>${esc(t.title)}\n任务量 ${t.workload}/10 · 完成度 ${t.completion}% · 重要性 ${t.importance} · 截止 ${dayLabel(y)}\n${t.done?'已完成':countdown(t.deadline,now)}</title></circle>`;}
+  for(const t of a){const [x,y]=coordinates(t,now),r=radii.get(t.id);s+=`<circle class="bubble" tabindex="0" role="button" aria-label="${esc(t.title)}，重要性${t.importance}，截止${dayLabel(y)}，任务量${t.workload}，完成度${t.completion}%" data-edit="${esc(t.id)}" cx="${sx(x)}" cy="${sy(y)}" r="${r}" fill="${completionColor(t.completion)}" fill-opacity="${t.done ? .25 : .72}" stroke="${completionColor(t.completion)}" stroke-width="1.5"><title>${esc(t.title)}\n任务量 ${t.workload} · 完成度 ${t.completion}% · 重要性 ${t.importance} · 截止 ${dayLabel(y)}\n${t.done?'已完成':countdown(t.deadline,now)}</title></circle>`;}
   for(const t of a){const [x,y]=coordinates(t,now),cx=sx(x),cy=sy(y),r=radii.get(t.id);s+=taskCompletionLabel(t,cx,cy)+completedTaskIcon(t,cx,cy,r);}
   s+='</g>';s+=mobileTags(a,now,sx,sy,radii);if(!a.length)s+=`<text x="${(L+R)/2}" y="${(T+B)/2}" text-anchor="middle" fill="#87929d" font-size="16">此范围内暂无任务 · 可滚动或缩放探索</text>`;
   const focusId=document.activeElement?.dataset?.edit;$('chart').innerHTML=s;if(focusId)[...$('chart').querySelectorAll('[data-edit]')].find(el=>el.dataset.edit===focusId)?.focus();
@@ -384,29 +384,89 @@ function zoomViewport(factor,p){const b=chartBox;const fx=(p.x-b.left)/(b.right-
 function beginGesture(){const pts=[...activePointers.values()];if(!pts.length){dragState=null;return;}const p=pts[0],q=pts[1];dragState={x:q?(p.x+q.x)/2:p.x,y:q?(p.y+q.y)/2:p.y,distance:q?Math.hypot(q.x-p.x,q.y-p.y):0,viewport:{x:[...viewport.x],y:[...viewport.y]},moved:false};}
 
 
-let bubbleDrag=null;
+let bubbleDrag=null,radiusEdit=null;
 function bubblePreview(t){
- const preview=bubbleDrag?.moved?bubbleDrag.previews?.get(t.id):null;
+ const preview=radiusEdit?.previews?.get(t.id)||(bubbleDrag?.moved?bubbleDrag.previews?.get(t.id):null);
  return preview?{...t,...preview}:t;
 }
 function desktopBubbleHit(e){
  if(mobileMode||e.pointerType==='touch')return null;
- const p=chartPoint(e);if(!p)return null;
- const circle=e.target.closest?.('.bubble');if(!circle)return null;
- const cx=Number(circle.getAttribute('cx')),cy=Number(circle.getAttribute('cy')),r=Number(circle.getAttribute('r'));
- if(![cx,cy,r].every(Number.isFinite)||r<=0)return null;
- return {circle,id:circle.dataset.edit,p,cx,cy,r,cursor:'grab'};
+ const svg=$('chart'),p=chartPoint(e);if(!p)return null;
+ const ctm=svg.getScreenCTM(),scale=Math.max(Number.EPSILON,Math.hypot(ctm?.a||1,ctm?.b||0)),outerEdge=8/scale;
+ const direct=e.target.closest?.('.bubble');
+ const inspect=(circle,outsideOnly=false)=>{
+  const cx=Number(circle.getAttribute('cx')),cy=Number(circle.getAttribute('cy')),r=Number(circle.getAttribute('r'));
+  if(![cx,cy,r].every(Number.isFinite)||r<=0)return null;
+  const dx=p.x-cx,dy=p.y-cy,distance=Math.hypot(dx,dy),innerEdge=Math.min(r*.35,6/scale);
+  if(outsideOnly){
+   const gap=distance-r;if(gap<0||gap>outerEdge)return null;
+   const cursor='ns-resize';
+   return {circle,id:circle.dataset.edit,p,cx,cy,r,resize:true,cursor,gap};
+  }
+  const resize=distance>=r-innerEdge;
+  const cursor=resize?'ns-resize':'grab';
+  return {circle,id:circle.dataset.edit,p,cx,cy,r,resize,cursor,gap:Math.abs(distance-r)};
+ };
+ if(direct)return inspect(direct);
+ let best=null;
+ for(const circle of svg.querySelectorAll('.bubble')){
+  const hit=inspect(circle,true);
+  if(hit&&(!best||hit.gap<best.gap))best=hit;
+ }
+ return best;
 }
 function hoverDesktopBubble(e){
- if(bubbleDrag||selectionDrag)return;
+ if(bubbleDrag||selectionDrag||radiusEdit)return;
  const svg=$('chart');
  if(e.ctrlKey){svg.style.cursor=activePointers.size?'grabbing':'grab';return;}
  const hit=desktopBubbleHit(e);
  svg.style.cursor=hit?hit.cursor:'';
  if(hit)hit.circle.style.cursor=hit.cursor;
 }
+function startRadiusEdit(e,h){
+ const t=tasks.find(v=>v.id===h.id);if(!t)return false;
+ closeChartMenu();mapHoldCancel();
+ if(!selectedTaskIds.has(h.id))setSelectedTasks([h.id]);
+ const displayed=taskRadii(viewportTasks(filtered(),Date.now()));
+ const ids=[...selectedTaskIds],originals=new Map(),previews=new Map(),radii=new Map();
+ for(const id of ids){
+  const task=tasks.find(v=>v.id===id);if(!task)continue;
+  const state={importance:task.importance,deadline:task.deadline,workload:task.workload};
+  originals.set(id,state);previews.set(id,{...state});radii.set(id,displayed.get(id)||24);
+ }
+ if(!originals.size)return false;
+ radiusEdit={primaryId:h.id,pointerId:e.pointerId,startY:e.clientY,lastY:e.clientY,originals,previews,radii,moved:false};
+ suppressChartClickUntil=Date.now()+800;const svg=$('chart');svg.setPointerCapture(e.pointerId);svg.style.cursor='ns-resize';
+ notify(originals.size>1?'按住并上下移动鼠标可同时缩放 '+originals.size+' 个圆圈；松开确认，Esc 取消。':'按住并上下移动鼠标调整半径；松开确认，Esc 取消。');
+ highlightSelection();return true;
+}
+function moveRadiusEdit(e){
+ const g=radiusEdit;if(!g||e.pointerId!==g.pointerId||e.pointerType==='touch')return;
+ const dy=g.startY-e.clientY;
+ if(!g.moved&&Math.abs(dy)<2)return;
+ g.moved=true;g.lastY=e.clientY;
+ const factor=Math.max(.05,Math.min(20,Math.exp(dy*.008)));
+ for(const [id,startRadius] of g.radii){
+  const preview=g.previews.get(id);if(!preview)continue;
+  preview.workload=Number(Math.max(.1,Math.min(100000,g.originals.get(id).workload*factor*factor)).toPrecision(12));
+ }
+ suppressChartClickUntil=Date.now()+600;requestChartRefresh();
+}
+function finishRadiusEdit(commit=true){
+ const g=radiusEdit;if(!g)return;
+ radiusEdit=null;const svg=$('chart');svg.style.cursor='';if(svg.hasPointerCapture(g.pointerId))svg.releasePointerCapture(g.pointerId);
+ if(commit&&g.moved){
+  const unchanged=[...g.originals].every(([id,o])=>{const t=tasks.find(v=>v.id===id);return t&&['importance','deadline','workload'].every(k=>t[k]===o[k]);});
+  if(unchanged){
+   for(const [id,preview] of g.previews){const t=tasks.find(v=>v.id===id);if(t)t.workload=preview.workload;}
+   save();notify(g.originals.size>1?'已同时调整 '+g.originals.size+' 个圆圈的半径。':'圆圈半径已调整。');
+  }else notify('日程已发生其他修改，本次半径调整未保存。');
+ }
+ suppressChartClickUntil=Date.now()+500;renderLinked(Date.now());
+}
 function startBubbleDrag(e){
  const h=desktopBubbleHit(e);if(!h||e.button!==0)return false;
+ if(h.resize)return startRadiusEdit(e,h);
  const t=tasks.find(t=>t.id===h.id);if(!t)return false;
  closeChartMenu();mapHoldCancel();
  if(!selectedTaskIds.has(h.id))setSelectedTasks([h.id]);
@@ -414,7 +474,7 @@ function startBubbleDrag(e){
  const originals=new Map(),previews=new Map();
  for(const id of ids){
   const task=tasks.find(v=>v.id===id);if(!task)continue;
-  const state={importance:task.importance,deadline:task.deadline};
+  const state={importance:task.importance,deadline:task.deadline,workload:task.workload};
   originals.set(id,state);previews.set(id,{...state});
  }
  if(!originals.has(h.id))return false;
@@ -514,7 +574,7 @@ function installChartInteraction(){
  window.addEventListener('keyup',e=>{if(e.key==='Control'){ctrlPanKey=false;if(!activePointers.size)updateCtrlCursor();}});
  mapHoldCancel=cancelHold;
  svg.addEventListener('wheel',e=>{
-  if(bubbleDrag||selectionDrag){e.preventDefault();return;}
+  if(radiusEdit||bubbleDrag||selectionDrag){e.preventDefault();return;}
   const p=chartPoint(e);if(!onPlot(p))return;
   e.preventDefault();cancelHold();closeChartMenu();
   const delta=e.deltaY||e.deltaX;
@@ -534,7 +594,7 @@ function installChartInteraction(){
   requestChartRefresh();
  },{passive:false});
  svg.addEventListener('pointerdown',e=>{
-  if(bubbleDrag||selectionDrag||e.button!==0)return;
+  if(radiusEdit||bubbleDrag||selectionDrag||e.button!==0)return;
   const p=chartPoint(e);if(!onPlot(p))return;
   if(e.pointerType!=='touch'&&e.ctrlKey){
    cancelHold();closeChartMenu();clickTaskId=null;ctrlPanKey=true;
@@ -560,6 +620,7 @@ function installChartInteraction(){
   }
  });
  svg.addEventListener('pointermove',e=>{
+  if(radiusEdit){moveRadiusEdit(e);return;}
   if(bubbleDrag){moveBubbleDrag(e);return;}
   if(selectionDrag){moveSelectionDrag(e);return;}
   hoverDesktopBubble(e);
@@ -578,6 +639,7 @@ function installChartInteraction(){
   setViewport(next);requestChartRefresh();
  });
  function finish(e){
+  if(radiusEdit){if(e.pointerId===radiusEdit.pointerId)finishRadiusEdit(e.type==='pointerup');return;}
   if(bubbleDrag){if(e.pointerId===bubbleDrag.pointerId)finishBubbleDrag(e.type==='pointerup');return;}
   if(selectionDrag){if(e.pointerId===selectionDrag.pointerId)finishSelectionDrag(e.type==='pointerup');return;}
   cancelHold();const editId=e.type==='pointerup'&&!holdOpened&&$('chartMenu').hidden&&activePointers.size===1&&!dragState?.moved?clickTaskId:null;clickTaskId=null;
@@ -589,14 +651,15 @@ function installChartInteraction(){
   if(editId){suppressChartClickUntil=Date.now()+400;selectTask(editId);}
  }
  svg.addEventListener('pointerup',finish);svg.addEventListener('pointercancel',finish);
- svg.addEventListener('lostpointercapture',e=>{if(activePointers.has(e.pointerId)?.pointerId===e.pointerId||bubbleDrag?.pointerId===e.pointerId||selectionDrag?.pointerId===e.pointerId)finish(e);});
+ svg.addEventListener('lostpointercapture',e=>{if(activePointers.has(e.pointerId)||radiusEdit?.pointerId===e.pointerId||bubbleDrag?.pointerId===e.pointerId||selectionDrag?.pointerId===e.pointerId)finish(e);});
  svg.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
+   if(radiusEdit){e.preventDefault();finishRadiusEdit(false);}
    if(bubbleDrag){e.preventDefault();finishBubbleDrag(false);}
    if(selectionDrag){e.preventDefault();finishSelectionDrag(false);}
    cancelHold();closeChartMenu();return;
   }
-  if(bubbleDrag||selectionDrag)return;
+  if(radiusEdit||bubbleDrag||selectionDrag)return;
   if(e.target!==svg)return;
   if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();const p={x:(chartBox.left+chartBox.right)/2,y:(chartBox.top+chartBox.bottom)/2},r=svg.getBoundingClientRect();openChartCreateMenu(p,(r.left+r.right)/2,(r.top+r.bottom)/2);return;}
   const shifts={ArrowLeft:[-.15,0],ArrowRight:[.15,0],ArrowUp:[0,-.15],ArrowDown:[0,.15]};
@@ -608,10 +671,10 @@ function installChartInteraction(){
  $('resetChart').onclick=resetViewport;$('fitChart').onclick=fitAllTasks;
  $('applyRange').onclick=()=>{const x=[-12,12],y=[dayFromInput($('yMin').value),dayFromInput($('yMax').value)];if(![...x,...y].every(Number.isFinite)||x[0]>=x[1]||y[0]>=y[1]){notify('范围必须有效，且最早日期必须早于最晚日期');return;}setViewport({x,y});renderLinked(Date.now());};
  $('listScope').onchange=()=>renderLinked(Date.now());
- window.addEventListener('blur',()=>{finishBubbleDrag(false);finishSelectionDrag(false);cancelHold();closeChartMenu();activePointers.clear();dragState=null;ctrlPanKey=false;svg.style.cursor='';});
+ window.addEventListener('blur',()=>{finishRadiusEdit(false);finishBubbleDrag(false);finishSelectionDrag(false);cancelHold();closeChartMenu();activePointers.clear();dragState=null;ctrlPanKey=false;svg.style.cursor='';});
 }
 function localInput(date){const d=new Date(date);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);}
-function openEditor(id){if(bubbleDrag)finishBubbleDrag(false);const t=tasks.find(t=>t.id===id);resetEditorAI(t);$('taskForm').reset();$('editorTitle').textContent=t?'编辑日程':'新建日程';$('taskId').value=t?.id||'';$('taskTitle').value=t?.title||'';$('taskDetails').value=t?.details||'';$('taskCategory').value=t?.category||'工作';$('taskWorkload').value=t?.workload||1;$('taskDeadline').value=localInput(t?.deadline||Date.now()+DAY);$('taskImportance').value=t?.importance??0;$('importanceValue').value=$('taskImportance').value;$('taskDone').checked=t?.done||false;setDetailsMode(t?.detailsMode||'text');$('editor').showModal();$('taskTitle').focus();}
+function openEditor(id){if(radiusEdit)finishRadiusEdit(false);if(bubbleDrag)finishBubbleDrag(false);const t=tasks.find(t=>t.id===id);resetEditorAI(t);$('taskForm').reset();$('editorTitle').textContent=t?'编辑日程':'新建日程';$('taskId').value=t?.id||'';$('taskTitle').value=t?.title||'';$('taskDetails').value=t?.details||'';$('taskCategory').value=t?.category||'工作';$('taskWorkload').value=t?.workload||1;$('taskDeadline').value=localInput(t?.deadline||Date.now()+DAY);$('taskImportance').value=t?.importance??0;$('importanceValue').value=$('taskImportance').value;$('taskDone').checked=t?.done||false;setDetailsMode(t?.detailsMode||'text');$('editor').showModal();$('taskTitle').focus();}
 $('taskForm').onsubmit=e=>{e.preventDefault();const title=$('taskTitle').value.trim(),category=$('taskCategory').value.trim();if(!title||!category){notify('题目和类别不能仅包含空格');return;}const date=new Date($('taskDeadline').value);if(!Number.isFinite(date.getTime())){notify('请填写有效的截止时间');return;}const id=$('taskId').value||uid(),existing=tasks.find(v=>v.id===id),done=$('taskDone').checked,completion=done?100:(existing?.completion===100?0:(existing?.completion??0));const t={id,title,details:$('taskDetails').value,category,importance:Number($('taskImportance').value),workload:Number($('taskWorkload').value),deadline:date.toISOString(),done,completion,detailsMode};try{validate([t]);if(t.importance<-10||t.importance>10)throw Error('重要性必须在 −10～10 之间');}catch(e){notify(e.message);return;}const i=tasks.findIndex(v=>v.id===t.id);if(i<0)tasks.push(t);else tasks[i]=t;save();$('editor').close();if(i<0)focusTaskTag(t.id,true);else{render();taskTagElement(t.id)?.focus({preventScroll:true});}};
 $('taskImportance').oninput=()=>$('importanceValue').value=$('taskImportance').value;$('newBtn').onclick=()=>openEditor();$('closeEditor').onclick=$('cancelEditor').onclick=()=>$('editor').close();$('helpBtn').onclick=()=>$('help').showModal();$('closeHelp').onclick=()=>$('help').close();
 
@@ -644,7 +707,7 @@ function openChartCreateMenu(p,x,y,targetId=null){
 
 function updateChartMenuAvailability(){
  const set=(id,reason)=>{const b=$(id);b.disabled=!!reason;b.title=reason||'';b.setAttribute('aria-disabled',String(!!reason));};
- const busy=!!(bubbleDrag||selectionDrag);
+ const busy=!!(radiusEdit||bubbleDrag||selectionDrag);
  const one=tasks.find(t=>t.id===chartMenuAITaskId);
  const focus=tasks.find(t=>t.id===chartMenuFocusId);
  const settings=aiSettings();
@@ -678,7 +741,7 @@ function focusTaskTag(id,edit=false){
  else $('chart').focus({preventScroll:true});
 }
 function deleteTasksByIds(taskIds){
- if(storageBlocked||bubbleDrag||selectionDrag)return;
+ if(storageBlocked||radiusEdit||bubbleDrag||selectionDrag)return;
  const ids=new Set(taskIds),removed=tasks.filter(t=>ids.has(t.id));if(!removed.length)return;
  const label=removed.length===1?'“'+(removed[0].title||'未命名日程')+'”':'选中的 '+removed.length+' 个日程';
  if(!confirm('确定删除'+label+'？'))return;
@@ -694,7 +757,7 @@ function handleMapShortcut(e){
  if(e.defaultPrevented||e.isComposing||e.ctrlKey||e.metaKey||e.altKey)return;
  const el=e.target;
  if(el?.closest?.('input,textarea,select,[contenteditable]:not([contenteditable="false"]),[role="textbox"]')||document.querySelector('dialog[open]'))return;
- if(bubbleDrag||selectionDrag)return;
+ if(radiusEdit||bubbleDrag||selectionDrag)return;
  const selected=[...selectedTaskIds].filter(id=>tasks.some(t=>t.id===id));
  const focused=el?.closest?.('#chart [data-edit]')?.dataset.edit;
  const ids=selected.length?selected:focused&&tasks.some(t=>t.id===focused)?[focused]:[];
@@ -763,7 +826,7 @@ function deleteSelectedTasks(){
 function act(e){const b=e.target.closest('[data-edit],[data-toggle],[data-delete],[data-focus],[data-select]');if(!b)return;closeChartMenu();if(b.dataset.select){selectTask(b.dataset.select);return;}if(b.dataset.focus){focusTask(b.dataset.focus);selectedTaskId=b.dataset.focus;highlightSelection();requestLinks();return;}if(b.dataset.edit){openEditor(b.dataset.edit);return;}if(b.dataset.toggle){const t=tasks.find(t=>t.id===b.dataset.toggle);if(!t)return;t.done=!t.done;save();render();}if(b.dataset.delete)deleteTask(b.dataset.delete);}
 $('rows').onclick=act;$('chart').onclick=e=>{if(Date.now()<suppressChartClickUntil)return;const bubble=e.target.closest('.bubble[data-edit]');if(bubble){selectTask(bubble.dataset.edit);return;}if(!e.target.closest('[data-edit]')){selectedTaskId=null;highlightSelection();requestLinks();}};
 $('chart').ondblclick=e=>{const tag=e.target.closest('.mobile-task-tag[data-edit]');if(tag){e.preventDefault();e.stopPropagation();editTagInline(tag);return;}const bubble=e.target.closest('.bubble[data-edit]');if(bubble){e.preventDefault();e.stopPropagation();openEditor(bubble.dataset.edit);}};
-$('chart').oncontextmenu=e=>{e.preventDefault();if(bubbleDrag)return;if(activePointers.size>1||dragState?.moved)return;const p=chartPoint(e);if(!onPlot(p))return;mapHoldCancel();if(!$('chartMenu').hidden)return;openChartCreateMenu(p,e.clientX,e.clientY,e.target.closest('[data-edit]')?.dataset.edit);};
+$('chart').oncontextmenu=e=>{e.preventDefault();if(radiusEdit||bubbleDrag)return;if(activePointers.size>1||dragState?.moved)return;const p=chartPoint(e);if(!onPlot(p))return;mapHoldCancel();if(!$('chartMenu').hidden)return;openChartCreateMenu(p,e.clientX,e.clientY,e.target.closest('[data-edit]')?.dataset.edit);};
 $('chart').onkeydown=e=>{const bubble=e.target.closest('[data-edit]');if(!bubble)return;if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();const r=bubble.getBoundingClientRect(),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;openChartCreateMenu(chartPoint({clientX:x,clientY:y}),x,y,bubble.dataset.edit);}else if(e.key==='Enter'||e.key===' '){e.preventDefault();if(e.shiftKey)openEditor(bubble.dataset.edit);else selectTask(bubble.dataset.edit,true);}};
 $('chartMenuCreate').onclick=createTaskAtMenu;
 $('chartMenuDetail').onclick=()=>{updateChartMenuAvailability();if($('chartMenuDetail').disabled)return;const id=chartMenuAITaskId;closeChartMenu();openMobileDetail(id);};
@@ -786,7 +849,7 @@ $('chartMenuMarkUndone').onclick=()=>markMenuTasksDone(false);
 function adjustMenuCompletion(){
  const input=$('chartMenuCompletion'),value=Number(input.value);
  const task=tasks.find(t=>t.id===chartMenuAITaskId);
- if(input.disabled||$('chartMenu').hidden||!task||storageBlocked||bubbleDrag||selectionDrag||!Number.isInteger(value)||value<0||value>100)return;
+ if(input.disabled||$('chartMenu').hidden||!task||storageBlocked||radiusEdit||bubbleDrag||selectionDrag||!Number.isInteger(value)||value<0||value>100)return;
  task.completion=value;task.done=value===100;$('chartMenuCompletionValue').textContent=value+'%';
  save();renderLinked(Date.now());
  if($('mobileDetail').open&&mobileDetailId===task.id)openMobileDetail(task.id);
@@ -1069,7 +1132,7 @@ window.addEventListener('keydown',handleMapShortcut,true);
 installLinks();installChartInteraction();load();resetViewport();render();initMobile();setInterval(()=>{tick();if($('mobileDetail').open&&mobileDetailId){const t=tasks.find(t=>t.id===mobileDetailId);if(t)$('mobileDetailCountdown').textContent=t.done?'已完成':countdown(t.deadline);else $('mobileDetail').close();}},1000);
 window.ScheduleSync?.controls(cloud,{
  blocked:()=>storageBlocked,
- busy:()=>storageBlocked||!!inlineTagEditor||!!bubbleDrag||!!!!selectionDrag||pendingTagCreations.size>0||!!document.querySelector('dialog[open]'),
+ busy:()=>storageBlocked||!!inlineTagEditor||!!bubbleDrag||!!radiusEdit||!!selectionDrag||pendingTagCreations.size>0||!!document.querySelector('dialog[open]'),
  validate,unpack,
  apply:incoming=>{tasks=validate(incoming);selectedTaskIds.clear();selectedTaskId=null;pinnedTaskId=null;render();},
  status:message=>{$('saveStatus').textContent=message;}
