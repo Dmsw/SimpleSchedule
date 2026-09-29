@@ -50,7 +50,7 @@ body.mobile-mode .twocol{grid-template-columns:1fr}
 .linked-layout{display:block}.chart-panel{position:static}main{max-width:none}#listView,#taskLinks,#sortBy,#direction{display:none!important}
 .bubble-editing,.bubble-editing *{cursor:inherit!important}
 #chart:focus:not(:focus-visible){outline:none}
-#chartMenu .menu-slider{padding:9px;border-top:1px solid var(--line);margin-top:5px}#chartMenu .menu-slider label{display:flex;justify-content:space-between;align-items:center;font-size:13px}#chartMenuWorkload,#chartMenuCompletion{width:100%;padding:0;margin:8px 0 0;accent-color:var(--accent)}#chartMenuWorkload,#chartMenuCompletion:disabled{opacity:.4;cursor:not-allowed}
+#chartMenu .menu-slider{padding:9px;border-top:1px solid var(--line);margin-top:5px}#chartMenu .menu-slider label{display:flex;justify-content:space-between;align-items:center;font-size:13px}#chartMenuWorkload,#chartMenuCompletion{width:100%;padding:0;margin:8px 0 0;accent-color:var(--accent)}#chartMenuWorkload:disabled,#chartMenuCompletion:disabled{opacity:.4;cursor:not-allowed}
 </style></head><body>
 <header><div class="brand"><div class="mark">序</div><div><h1>本地日程</h1><div class="sub">让重要的事，清晰有序。</div></div></div><div class="actions" id="mobileHeaderActions"><button id="cloudLogin" type="button">登录同步</button><button id="aiBtn">✦ AI 助手</button><button id="helpBtn">使用说明</button><button id="exportBtn">导出备份</button><button id="importBtn">导入备份</button><button id="clearTasks" class="danger" type="button">清空所有日程</button></div><button id="mobileMenu" class="mobile-only" aria-expanded="false" aria-controls="mobileHeaderActions">菜单</button></header>
 <svg id="taskLinks" aria-hidden="true"></svg>
@@ -645,10 +645,10 @@ function updateChartMenuAvailability(){
  const reason=busy?'请先结束拖动':storageBlocked?'本地存储不可用':!picked.length?'请先选中日程':'';
  set('chartMenuMarkDone',reason||(!picked.some(t=>!t.done)?'所选日程均已完成':''));
  set('chartMenuMarkUndone',reason||(!picked.some(t=>t.done)?'所选日程均未完成':''));
- set('chartMenuWorkload',busy?'请先结束拖动':storageBlocked?'本地存储不可用':!one?'请选择单个日程':'');
+ set('chartMenuWorkload',busy?'请先结束拖动':storageBlocked?'本地存储不可用':chartMenuDeleteIds.length>1?'多选时不可调整任务量':!one?'请选择单个日程':'');
  $('chartMenuWorkload').value=one?one.workload:5;
  $('chartMenuWorkloadValue').textContent=one?String(one.workload):'—';
- set('chartMenuCompletion',busy?'请先结束拖动':storageBlocked?'本地存储不可用':!one?'请选择单个日程':'');
+ set('chartMenuCompletion',busy?'请先结束拖动':storageBlocked?'本地存储不可用':chartMenuDeleteIds.length>1?'多选时不可调整完成度':!one?'请选择单个日程':'');
  $('chartMenuCompletion').value=one?one.completion:0;
  $('chartMenuCompletionValue').textContent=one?String(one.completion)+'%':'—';
  set('chartMenuCreate',busy?'请先结束拖动':storageBlocked?'本地存储不可用':!chartCreatePoint?'请选择地图位置':'');
