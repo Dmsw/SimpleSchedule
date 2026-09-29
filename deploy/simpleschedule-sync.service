@@ -1,0 +1,22 @@
+[Unit]
+Description=SimpleSchedule login and sync API
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/simpleschedule
+Environment=SCHEDULE_ORIGIN=https://www.simpleschedule.site
+Environment=SCHEDULE_DB=/var/lib/simpleschedule/schedule.sqlite3
+ExecStart=/var/www/simpleschedule/.venv/bin/gunicorn --bind 127.0.0.1:8765 --workers 2 --timeout 60 server.app:create_app()
+Restart=on-failure
+UMask=0077
+StateDirectory=simpleschedule
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/simpleschedule
+
+[Install]
+WantedBy=multi-user.target
