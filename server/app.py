@@ -44,19 +44,26 @@ def validate_tasks(tasks):
         if not t['id'] or t['id'] in ids or not t['category'].strip() or (not t['title'].strip() and t.get('draft') is not True):
             raise APIError(400, '日程 ID、标题或类别无效')
         ids.add(t['id'])
-        for key, low, high in [('importance', -10, 10), ('workload', .1, 100000), ('difficulty', 1, 10)]:
-            v = t.get(key)
-            if type(v) not in (float, int) or not math.isfinite(v) or not low <= v <= high:
-                raise APIError(400, '日程数值无效')
-        if type(t['difficulty']) is not int or type(t.get('done')) is not bool or t.get('detailsMode') not in ('text', 'markdown'):
+        importance = t.get('importance')
+        workload = t.get('workload')
+        completion = t.get('completion')
+        if type(importance) not in (float, int) or not math.isfinite(importance) or not -10 <= importance <= 10:
+            raise APIError(400, '日程重要性无效')
+        if type(workload) not in (float, int) or not math.isfinite(workload) or not .1 <= workload <= 100000:
+            raise APIError(400, '日程任务量无效')
+        if type(completion) is not int or not 0 <= completion <= 100:
+            raise APIError(400, '日程完成度无效')
+        if type(t.get('done')) is not bool or t.get('detailsMode') not in ('text', 'markdown'):
             raise APIError(400, '日程状态无效')
+        if t['done'] != (completion == 100):
+            raise APIError(400, '完成状态与完成度不一致')
         try:
             date = datetime.fromisoformat(t['deadline'].replace('Z', '+00:00'))
             if date.tzinfo is None:
                 raise ValueError()
         except ValueError:
             raise APIError(400, '截止日期无效')
-        result.append({k: t[k] for k in ('id', 'title', 'details', 'category', 'deadline', 'importance', 'workload', 'difficulty', 'done', 'detailsMode')} | ({'draft': True} if t.get('draft') is True else {}))
+        result.append({k: t[k] for k in ('id', 'title', 'details', 'category', 'deadline', 'importance', 'workload', 'completion', 'done', 'detailsMode')} | ({'draft': True} if t.get('draft') is True else {}))
     return result
 
 
