@@ -337,10 +337,13 @@ function installLinks(){
 
 // Render the supplied check.svg path directly, avoiding SVG image loading.
 const TASK_CHECK_PATH="M416.832 798.08c-16.192 0-32.32-6.208-44.672-18.56L119.424 525.76c-24.64-24.768-24.64-64.96 0-89.728 24.704-24.768 64.704-24.768 89.344 0l208.064 208.896L814.4 245.76c24.64-24.832 64.64-24.832 89.344 0 24.64 24.768 24.64 64.896 0 89.664L461.504 779.52c-12.352 12.352-28.544 18.56-44.672 18.56z";
+function taskCompletionLabel(task,cx,cy){
+ return '<text class="task-completion-label" x="'+cx+'" y="'+(cy+4)+'" text-anchor="middle" pointer-events="none" aria-hidden="true" font-size="10" font-weight="700" fill="#173c31" stroke="white" stroke-width="2.4" paint-order="stroke">'+task.completion+'%</text>';
+}
 function completedTaskIcon(task,cx,cy,r){
- if(!task.done)return '';
- const size=r*1.4;
- return '<svg class="task-completed-icon" x="'+(cx-size/2)+'" y="'+(cy-size/2)+'" width="'+size+'" height="'+size+'" viewBox="0 0 1024 1024" pointer-events="none" aria-hidden="true"><path d="'+TASK_CHECK_PATH+'" fill="#1AB394" stroke="white" stroke-width="18" paint-order="stroke" pointer-events="none"/></svg>';
+ if(task.completion!==100)return '';
+ const size=r*1.05;
+ return '<svg class="task-completed-icon" x="'+(cx-size/2)+'" y="'+(cy-size/2)+'" width="'+size+'" height="'+size+'" viewBox="0 0 1024 1024" pointer-events="none" aria-hidden="true"><path d="'+TASK_CHECK_PATH+'" fill="#1AB394" stroke="white" stroke-width="34" paint-order="stroke" pointer-events="none"/></svg>';
 }
 function draw(a,outside,now){
   a=a.map(bubblePreview);
@@ -362,7 +365,7 @@ function draw(a,outside,now){
   s+=`<g clip-path="url(#plotClip)">`;
   const radii=taskRadii(a);
   for(const t of a){const [x,y]=coordinates(t,now),r=radii.get(t.id);s+=`<circle class="bubble" tabindex="0" role="button" aria-label="${esc(t.title)}，重要性${t.importance}，截止${dayLabel(y)}，任务量${t.workload}，完成度${t.completion}%" data-edit="${esc(t.id)}" cx="${sx(x)}" cy="${sy(y)}" r="${r}" fill="${workloadColor(t.workload)}" fill-opacity="${t.done ? .25 : .72}" stroke="${workloadColor(t.workload)}" stroke-width="1.5"><title>${esc(t.title)}\n任务量 ${t.workload}/10 · 完成度 ${t.completion}% · 重要性 ${t.importance} · 截止 ${dayLabel(y)}\n${t.done?'已完成':countdown(t.deadline,now)}</title></circle>`;}
-  for(const t of a){const [x,y]=coordinates(t,now);s+=completedTaskIcon(t,sx(x),sy(y),radii.get(t.id));}
+  for(const t of a){const [x,y]=coordinates(t,now),cx=sx(x),cy=sy(y),r=radii.get(t.id);s+=taskCompletionLabel(t,cx,cy)+completedTaskIcon(t,cx,cy,r);}
   s+='</g>';s+=mobileTags(a,now,sx,sy,radii);if(!a.length)s+=`<text x="${(L+R)/2}" y="${(T+B)/2}" text-anchor="middle" fill="#87929d" font-size="16">此范围内暂无任务 · 可滚动或缩放探索</text>`;
   const focusId=document.activeElement?.dataset?.edit;$('chart').innerHTML=s;if(focusId)[...$('chart').querySelectorAll('[data-edit]')].find(el=>el.dataset.edit===focusId)?.focus();
   $('chart').setAttribute('aria-label','重要性与截止日期地图。越早截止越靠上；鼠标拖动空白区域框选，滚轮平移，Ctrl 加滚轮缩放');
