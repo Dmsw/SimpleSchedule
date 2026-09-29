@@ -25,12 +25,12 @@ class ScheduleSyncClient {
   const raw=this.storage.getItem(this.key);
   if(!raw)return null;
   const data=JSON.parse(raw);
-  if(data.app!=='FocusSchedule'||data.version!==6||!Array.isArray(data.tasks)||
+  if(data.app!=='FocusSchedule'||data.version!==7||!Array.isArray(data.tasks)||
     !Number.isInteger(data._sync?.revision)||data._sync.revision<0||typeof data._sync.dirty!=='boolean')throw Error('账号缓存无效，请先导出备份后再处理');
   return data;
  }
  write(tasks, revision, dirty) {
-  const data={app:'FocusSchedule',version:6,tasks,_sync:{revision,dirty}};
+  const data={app:'FocusSchedule',version:7,tasks,_sync:{revision,dirty}};
   this.storage.setItem(this.key,JSON.stringify(data));return data;
  }
  persist(data) {
@@ -152,7 +152,7 @@ if(typeof window!=='undefined')window.ScheduleSync={
   button.textContent=client.user.username+' · 同步';
   const make=(label,click)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=click;button.after(b);return b;};
   const backup=(local,remote)=>{
-   const data={app:'FocusSchedule',version:6,tasks:local,serverBackup:{app:'FocusSchedule',version:6,tasks:remote}};
+   const data={app:'FocusSchedule',version:7,tasks:local,serverBackup:{app:'FocusSchedule',version:7,tasks:remote}};
    const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
    const a=document.createElement('a');a.href=url;a.download='同步冲突备份-'+Date.now()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   };
