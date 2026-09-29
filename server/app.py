@@ -49,7 +49,7 @@ def validate_tasks(tasks):
         completion = t.get('completion')
         if type(importance) not in (float, int) or not math.isfinite(importance) or not -10 <= importance <= 10:
             raise APIError(400, '日程重要性无效')
-        if type(workload) is not int or not 1 <= workload <= 10:
+        if type(workload) not in (float, int) or not math.isfinite(workload) or not .1 <= workload <= 100000:
             raise APIError(400, '日程任务量无效')
         if type(completion) is not int or not 0 <= completion <= 100:
             raise APIError(400, '日程完成度无效')
