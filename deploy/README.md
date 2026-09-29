@@ -1,5 +1,7 @@
 # SimpleSchedule 服务器部署
 
+> 需要账号登录与多端同步时，请按 [SERVER_SYNC.md](SERVER_SYNC.md) 部署 API。下文是原有纯静态、本地存储模式。
+
 本项目是纯静态网页，无需 Node.js、Python 或数据库。推荐使用 Nginx 直接托管仓库根目录。
 
 ## 1. 克隆仓库
@@ -70,3 +72,4 @@ chmod +x deploy/update.sh
 ## 5. 数据说明
 
 任务和 AI 设置仍保存在访问者浏览器的 localStorage 中，不会自动写入服务器。更换设备或浏览器时需要使用应用内的导出/导入备份功能。
+
