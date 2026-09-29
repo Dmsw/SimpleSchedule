@@ -11,7 +11,7 @@ from server.app import Application
 
 
 TASK = dict(id='one', title='论文', details='## 步骤', category='科研', importance=8,
-            workload=30, difficulty=6, deadline='2026-10-01T00:00:00.000Z',
+            workload=6, completion=0, deadline='2026-10-01T00:00:00.000Z',
             done=False, detailsMode='markdown')
 
 
@@ -79,7 +79,7 @@ class SyncTests(unittest.TestCase):
 
     def test_validation_and_limits(self):
         auth = self.login()
-        for bad in [TASK | {'importance': 11}, TASK | {'done': 1}, TASK | {'difficulty': 1.5}, TASK | {'deadline': 'tomorrow'}, TASK | {'details': '<script>' * 2000}, TASK | {'workload': float('nan')}]:
+        for bad in [TASK | {'importance': 11}, TASK | {'done': 1}, TASK | {'workload': 11}, TASK | {'completion': -1}, TASK | {'completion': 100, 'done': False}, TASK | {'deadline': 'tomorrow'}, TASK | {'details': '<script>' * 2000}]:
             self.assertEqual(self.call('PUT', '/api/data', {'revision': 0, 'tasks': [bad]}, auth)[0], 400)
         self.assertEqual(self.call('PUT', '/api/data', {}, auth, CONTENT_LENGTH=str(31 * 1024 * 1024))[0], 413)
         self.assertEqual(self.call('GET', '/api/data', auth=auth)[1]['revision'], 0)
