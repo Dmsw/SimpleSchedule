@@ -28,13 +28,7 @@ class ScheduleSyncClient {
   try{data=JSON.parse(raw);}catch{throw Error('账号缓存不是有效 JSON，请先导出备份后再处理');}
   const syncValid=Number.isInteger(data?._sync?.revision)&&data._sync.revision>=0&&typeof data._sync.dirty==='boolean';
   if(data?.app!=='FocusSchedule'||!Array.isArray(data.tasks)||!syncValid)throw Error('账号缓存无效，请先导出备份后再处理');
-  if(data.version===6){
-   // v6 already has completion and a numeric workload. Preserve local edits and sync revision,
-   // then let the current app-level validator normalize task fields after startup.
-   data={...data,version:7};
-   this.storage.setItem(this.key,JSON.stringify(data));
-  }
-  if(data.version!==7)throw Error('账号缓存版本过旧，请先导出备份后再处理');
+  if(![1,2,4,5,6,7].includes(data.version))throw Error('账号缓存版本过旧，请先导出备份后再处理');
   return data;
  }
  write(tasks, revision, dirty) {
@@ -128,6 +122,11 @@ class ScheduleSyncClient {
  }
  attach(hooks) {
   this.hooks=hooks;
+  const cached=this.read();
+  if(cached.version!==7){
+   const migrated=hooks.unpack({app:cached.app,version:cached.version,tasks:cached.tasks});
+   this.write(migrated,cached._sync.revision,cached._sync.dirty);
+  }
   this.viewTasks=structuredClone(this.read().tasks);
   setInterval(()=>{if(!document.hidden)this.flush();},10000);
   window.addEventListener('online',()=>this.flush());
