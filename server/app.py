@@ -57,13 +57,22 @@ def validate_tasks(tasks):
             raise APIError(400, '日程状态无效')
         if t['done'] != (completion == 100):
             raise APIError(400, '完成状态与完成度不一致')
+        if 'daily' in t and type(t['daily']) is not bool:
+            raise APIError(400, '每日任务状态无效')
+        if 'dailyResetDate' in t and t['dailyResetDate'] is not None:
+            if not isinstance(t['dailyResetDate'], str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', t['dailyResetDate']):
+                raise APIError(400, '每日任务重置日期无效')
         try:
             date = datetime.fromisoformat(t['deadline'].replace('Z', '+00:00'))
             if date.tzinfo is None:
                 raise ValueError()
         except ValueError:
             raise APIError(400, '截止日期无效')
-        result.append({k: t[k] for k in ('id', 'title', 'details', 'category', 'deadline', 'importance', 'workload', 'completion', 'done', 'detailsMode')} | ({'draft': True} if t.get('draft') is True else {}))
+        base={k: t[k] for k in ('id', 'title', 'details', 'category', 'deadline', 'importance', 'workload', 'completion', 'done', 'detailsMode')}
+        if t.get('daily') is True:
+            base['daily'] = True
+            base['dailyResetDate'] = t.get('dailyResetDate')
+        result.append(base | ({'draft': True} if t.get('draft') is True else {}))
     return result
 
 
