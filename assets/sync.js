@@ -35,6 +35,14 @@ class ScheduleSyncClient {
   const data={app:'FocusSchedule',version:7,tasks,_sync:{revision,dirty}};
   this.storage.setItem(this.key,JSON.stringify(data));return data;
  }
+ adoptRemote(remote) {
+  const local=this.read();
+  if(!local||(!local._sync.dirty&&(local._sync.revision!==remote.revision||!scheduleEqual(local.tasks,remote.tasks)))){
+   this.write(remote.tasks,remote.revision,false);
+   return true;
+  }
+  return false;
+ }
  persist(data) {
   const previous=this.read();if(!previous)throw Error('账号缓存尚未初始化');
   let next=data.tasks;
@@ -61,16 +69,35 @@ class ScheduleSyncClient {
   return {'X-CSRF-Token':session.csrf,'X-Schedule-User':this.user.id};
  }
  async flush() {
-  if(this.running||this.conflict||this.hooks.blocked?.())return;
-  this.running=true;
+  if(this.running||this.conflict||this.hooks.blocked?.())return false;
+  this.running=true;let ok=false;
   try {
    // Serialize network sync across tabs. Local edits can continue during requests.
    if(globalThis.navigator?.locks)await navigator.locks.request(this.key,()=>this.exchange());
    else await this.exchange();
+   ok=true;
   } catch(error) {
    if(error.status===409){this.conflict=true;this.hooks.status('同步冲突 · 点击处理');}
    else this.hooks.status(error.status===401||error.status===403?'登录失效 · 请重新登录':'未同步 · '+error.message);
   } finally {this.running=false;}
+  return ok;
+ }
+ async syncNow() {
+  clearTimeout(this.timer);
+  const deadline=Date.now()+16000;
+  while(this.running&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,50));
+  if(this.running)throw Error('同步仍在进行，请稍后重试');
+  if(this.conflict)throw Error('存在同步冲突，请先处理');
+  const ok=await this.flush();
+  if(!ok){
+   if(this.conflict)throw Error('存在同步冲突，请先处理');
+   throw Error('服务器同步未完成，请检查网络后重试');
+  }
+  const local=this.read();
+  if(!local||local._sync.dirty)throw Error('本机修改尚未上传完成');
+  const remote=await this.request('data','GET',undefined,await this.authenticate());
+  if(remote.revision!==local._sync.revision||!scheduleEqual(remote.tasks,local.tasks))throw Error('服务器校验失败，请重新同步');
+  return remote;
  }
  async exchange() {
   const headers=await this.authenticate();
@@ -146,10 +173,12 @@ if(typeof window!=='undefined')window.ScheduleSync={
    try{user=JSON.parse(sessionStorage.getItem('schedule-last-account'));}catch{}
    if(!user?.id)throw Error('无法连接同步服务。请检查服务部署或网络后刷新。');
   }
-  const client=new ScheduleSyncClient(user);
-  if(!client.read()){
+  const client=new ScheduleSyncClient(user),cached=client.read();
+  try{
    const remote=await client.request('data','GET',undefined,await client.authenticate());
-   client.write(remote.tasks,remote.revision,false);
+   client.adoptRemote(remote);
+  }catch(error){
+   if(!cached)throw error;
   }
   return client;
  },
@@ -187,7 +216,7 @@ if(typeof window!=='undefined')window.ScheduleSync={
     sessionStorage.removeItem('schedule-last-account');location.assign('./');
    }catch(error){hooks.status('退出失败 · '+error.message);}
   });
-  make('上传本机日程',()=>{
+  make('上传本机日程',async()=>{
    try{
     if(hooks.busy())throw Error('请先结束日程编辑');
     const data=JSON.parse(localStorage.getItem('focus-schedule-v1')||'null');
@@ -196,7 +225,10 @@ if(typeof window!=='undefined')window.ScheduleSync={
     if(!confirm('将本浏览器未登录时的 '+incoming.length+' 条日程合并到当前账号，并上传服务器。同 ID 日程以本机为准，其他账号日程保留。继续？'))return;
     const tasks=new Map(current.tasks.map(t=>[t.id,t]));incoming.forEach(t=>tasks.set(t.id,t));
     const merged=[...tasks.values()];hooks.validate(merged);client.persist({tasks:merged});hooks.apply(merged);
-   }catch(error){hooks.status(error.message);}
+    hooks.status('正在上传服务器…');
+    await client.syncNow();
+    hooks.status('已上传并同步 · '+new Date().toLocaleTimeString('zh-CN'));
+   }catch(error){hooks.status(client.conflict?'同步冲突 · 点击处理':'上传失败 · '+error.message);}
   });
   client.attach({...hooks,status:message=>{const short=client.conflict?'同步冲突':message.startsWith('已同步')?'已同步':'同步';button.textContent=client.user.username+' · '+short;button.title=message;hooks.status(message);}});
  }
