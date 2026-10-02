@@ -33,6 +33,13 @@ async function run(){
  c.request=request;await c.flush();assert.equal(x.remote.tasks[0].title,'during');
  // Retrying a lost response recognizes identical content despite object key order.
  c.write([{title:'during',id:'a'}],1,true);await c.flush();assert.equal(c.read()._sync.dirty,false);
+ // Fresh-device login must adopt the server snapshot even if a clean empty cache already exists.
+ x=setup();c=x.c;x.remote={revision:3,tasks:[{id:'server',title:'from server'}]};
+ assert(c.adoptRemote(x.remote));assert.equal(c.read().tasks[0].title,'from server');assert.equal(c.read()._sync.revision,3);
+ // Dirty local changes must never be replaced by login-time remote adoption.
+ c.write([{id:'local',title:'pending'}],3,true);
+ assert.equal(c.adoptRemote({revision:4,tasks:[{id:'server',title:'newer'}]}),false);
+ assert.equal(c.read().tasks[0].id,'local');
  // Offline failures keep pending changes. Another account never receives them.
  c.persist({tasks:[]});clearTimeout(c.timer);c.request=async()=>{throw Error('offline')};await c.flush();assert(c.read()._sync.dirty);
  c.request=async()=>({user:{id:'bob'}});await c.flush();assert(c.status.includes('登录失效'));assert(c.read()._sync.dirty);
@@ -41,6 +48,6 @@ async function run(){
  c.write([{id:'a',title:'old'},{id:'b',title:'other tab'}],0,true);
  c.persist({tasks:[{id:'a',title:'edited'}]});clearTimeout(c.timer);assert.equal(c.read().tasks.length,2);
  c.write([{id:'a',title:'concurrent'}],0,true);assert.throws(()=>c.persist({tasks:[{id:'a',title:'mine'}]}),/另一窗口/);
- console.log('PASS uploads, downloads, deletion, conflict resolution, editing guard, in-flight edits, retry, offline, account isolation and local tab conflicts');
+ console.log('PASS uploads, downloads, login-time remote adoption, deletion, conflict resolution, editing guard, in-flight edits, retry, offline, account isolation and local tab conflicts');
 }
 run().catch(error=>{console.error(error);process.exitCode=1});
